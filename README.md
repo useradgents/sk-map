@@ -1,5 +1,6 @@
 # SKMap
 un composant Skot pour afficher/contrôler une map et ses markers
+
 Pour l'instant seule la version android "legacy" est disponible
 
 Elle est basée sur GoogleMap
