@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("skot-library-viewlegacy")
+    id("tech.skot.library-viewlegacy")
 
 }
 

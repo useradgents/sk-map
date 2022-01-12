@@ -1,4 +1,4 @@
 plugins {
     kotlin("multiplatform")
-    id("skot-library-contract")
+    id("tech.skot.library-contract")
 }
