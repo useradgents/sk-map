@@ -2,11 +2,15 @@ package tech.skot.libraries.map.di
 
 import tech.skot.core.di.InjectorMock
 import tech.skot.core.di.module
-import tech.skot.libraries.map.*
+import tech.skot.libraries.map.LatLng
+import tech.skot.libraries.map.SKMapVC
+import tech.skot.libraries.map.SKMapViewMock
 import tech.skot.libraries.map.view.Permissions
+import tech.skot.libraries.map.*
 
 class SKMapViewInjectorMock : SKMapViewInjector {
     override fun sKMap(
+        mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
         markersInitial: List<SKMapVC.Marker>,
         selectedMarkerInitial: SKMapVC.Marker?,
         selectMarkerOnClickInitial: Boolean,
@@ -14,9 +18,10 @@ class SKMapViewInjectorMock : SKMapViewInjector {
         onMarkerClickInitial: ((SKMapVC.Marker) -> Unit)?,
         onMarkerSelectedInitial: ((SKMapVC.Marker?) -> Unit)?,
         onMapClickedInitial: ((LatLng) -> Unit)?,
-        onMapBoundsChangeInitial: ((SKMapVC.MapBounds) -> Unit)?
+        onMapBoundsChangeInitial: ((SKMapVC.LatLngBounds) -> Unit)?
     ): SKMapVC {
         return SKMapViewMock(
+            mapInteractionSettingsInitial,
             markersInitial,
             selectedMarkerInitial,
             selectMarkerOnClickInitial,
