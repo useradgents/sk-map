@@ -35,7 +35,7 @@ class SKMapViewInjectorMock : SKMapViewInjector {
 
 }
 
-var skMapModuleMock = module<InjectorMock> {
+val skMapModuleMock = module<InjectorMock> {
     single<SKMapViewInjector> { SKMapViewInjectorMock() }
     single<Permissions> { PermissionsMock() }
     single<DeclaredPermissionHelper> { DeclaredPermissionHelperMock()}
