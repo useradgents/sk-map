@@ -19,8 +19,8 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
+//        mavenLocal()
         mavenCentral()
-        jcenter() // Warning: this repository is going to shut down soon
         maven {
             setUrl("https://api.mapbox.com/downloads/v2/releases/maven")
             authentication {

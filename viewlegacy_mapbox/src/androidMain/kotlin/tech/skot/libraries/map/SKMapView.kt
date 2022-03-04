@@ -54,7 +54,7 @@ class SKMapView(
 
     init {
 
-        lifecycle.addObserver(object : DefaultLifecycleObserver {
+        lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onDestroy(owner: LifecycleOwner) {
                 mapInteractionHelper
                 onMapClick?.let {

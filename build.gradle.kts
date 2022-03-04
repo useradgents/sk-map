@@ -1,14 +1,13 @@
 buildscript {
     repositories {
         google()
-        mavenCentral()
 //        mavenLocal()
+        mavenCentral()
     }
 
     dependencies {
         classpath("tech.skot:plugin:${Versions.framework}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.5.30")
-        classpath("com.android.tools.build:gradle:7.1.0")
     }
 }
 
