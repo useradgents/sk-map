@@ -8,8 +8,9 @@ import tech.skot.libraries.map.view.PermissionsImpl
 
 class SKMapViewInjectorImpl : SKMapViewInjector {
     override fun sKMap(
-        mapInteractionSettingsInitial : SKMapVC.MapInteractionSettings,
+        mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
         markersInitial: List<SKMapVC.Marker>,
+        linesInitial: List<SKMapVC.Line>,
         selectedMarkerInitial: SKMapVC.Marker?,
         selectMarkerOnClickInitial: Boolean,
         unselectMarkerOnMapClickInitial: Boolean,
@@ -17,17 +18,21 @@ class SKMapViewInjectorImpl : SKMapViewInjector {
         onMarkerSelectedInitial: Function1<SKMapVC.Marker?, Unit>?,
         onMapClickedInitial: Function1<LatLng, Unit>?,
         onMapBoundsChangeInitial: Function1<SKMapVC.LatLngBounds, Unit>?,
+        showLogInitial: Boolean
     ): SKMapVC =
         SKMapViewProxy(
             mapInteractionSettingsInitial,
             markersInitial,
+            linesInitial,
             selectedMarkerInitial,
             selectMarkerOnClickInitial,
             unselectMarkerOnMapClickInitial,
             onMarkerClickInitial,
             onMarkerSelectedInitial,
             onMapClickedInitial,
-            onMapBoundsChangeInitial)
+            onMapBoundsChangeInitial,
+            showLogInitial
+        )
 }
 
 

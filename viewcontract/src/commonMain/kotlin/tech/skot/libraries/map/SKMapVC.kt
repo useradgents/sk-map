@@ -3,7 +3,9 @@ package tech.skot.libraries.map
 import tech.skot.core.components.SKComponentVC
 import tech.skot.core.components.SKLayoutIsSimpleView
 import tech.skot.core.view.Color
+import tech.skot.core.view.Dimen
 import tech.skot.core.view.Icon
+import tech.skot.libraries.map.SKMapVC.MapInteractionSettings
 import tech.skot.libraries.map.SKMapVC.Marker
 
 
@@ -20,7 +22,9 @@ import tech.skot.libraries.map.SKMapVC.Marker
 interface SKMapVC : SKComponentVC {
 
 
+    var showLog: Boolean
     var markers: List<Marker>
+    var lines: List<Line>
     var onMapBoundsChange: ((MapBounds) -> Unit)?
     var mapInteractionSettings: MapInteractionSettings
 
@@ -58,6 +62,9 @@ interface SKMapVC : SKComponentVC {
      */
     fun getMapBounds(onResult: (SKMapVC.LatLngBounds) -> Unit)
 
+
+    fun getCurrentLocation(onResult: (LatLng) -> Unit)
+
     /**
      * data class representing a marker to show on the map
      * @param itemId unique id for the marker, used to update position
@@ -69,6 +76,13 @@ interface SKMapVC : SKComponentVC {
         open val position: LatLng,
         open val onMarkerClick: (() -> Unit)?,
         open val iconHash: (selected: Boolean) -> String
+    )
+
+    data class Line(
+        val points: List<LatLng>,
+        val color: Color,
+        val id: String?,
+        val lineWidth: Dimen,
     )
 
     /**
@@ -190,8 +204,3 @@ interface InternalSKMapVC : SKMapVC {
 
 typealias MapBounds = SKMapVC.LatLngBounds
 typealias LatLng = Pair<Double, Double>
-
-
-
-
-

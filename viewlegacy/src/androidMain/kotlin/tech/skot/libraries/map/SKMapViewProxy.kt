@@ -10,21 +10,29 @@ import tech.skot.view.live.SKMessage
 
 class SKMapViewProxy(
     mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
-    itemsInitial: List<SKMapVC.Marker>,
+    markersInitial: List<SKMapVC.Marker>,
+    linesInitial: List<SKMapVC.Line>,
     selectedMarkerInitial: SKMapVC.Marker?,
     selectMarkerOnClickInitial: Boolean,
     unselectMarkerOnMapClickInitial: Boolean,
     onMarkerClickInitial: Function1<SKMapVC.Marker, Unit>?,
     onMarkerSelectedInitial: Function1<SKMapVC.Marker?, Unit>?,
     onMapClickedInitial: Function1<LatLng, Unit>?,
-    onMapBoundsChangeInitial: Function1<SKMapVC.LatLngBounds, Unit>?
+    onMapBoundsChangeInitial: Function1<SKMapVC.LatLngBounds, Unit>?,
+    showLogInitial: Boolean
 ) : SKComponentViewProxy<MapView>(), InternalSKMapVC {
 
-    private val mapInteractionSettingsLD: MutableSKLiveData<SKMapVC.MapInteractionSettings> = MutableSKLiveData(mapInteractionSettingsInitial)
+    private val mapInteractionSettingsLD: MutableSKLiveData<SKMapVC.MapInteractionSettings> =
+        MutableSKLiveData(mapInteractionSettingsInitial)
     override var mapInteractionSettings: SKMapVC.MapInteractionSettings by mapInteractionSettingsLD
 
-    private val itemsLD: MutableSKLiveData<List<SKMapVC.Marker>> = MutableSKLiveData(itemsInitial)
-    override var markers: List<SKMapVC.Marker> by itemsLD
+    private val markersLD: MutableSKLiveData<List<SKMapVC.Marker>> =
+        MutableSKLiveData(markersInitial)
+    override var markers: List<SKMapVC.Marker> by markersLD
+
+
+    private val linesLD: MutableSKLiveData<List<SKMapVC.Line>> = MutableSKLiveData(linesInitial)
+    override var lines: List<SKMapVC.Line> by linesLD
 
     private val onMapClickedLD: MutableSKLiveData<Function1<LatLng, Unit>?> =
         MutableSKLiveData(onMapClickedInitial)
@@ -44,6 +52,10 @@ class SKMapViewProxy(
         MutableSKLiveData(selectMarkerOnClickInitial)
     override var selectMarkerOnClick: Boolean by selectMarkerOnClickLD
 
+    private val showLogLD: MutableSKLiveData<Boolean> =
+        MutableSKLiveData(showLogInitial)
+    override var showLog: Boolean by showLogLD
+
     private val unselectMarkerOnMapClickLD: MutableSKLiveData<Boolean> =
         MutableSKLiveData(unselectMarkerOnMapClickInitial)
     override var unselectMarkerOnMapClick: Boolean by unselectMarkerOnMapClickLD
@@ -62,6 +74,7 @@ class SKMapViewProxy(
     private val setCameraZoomMessage: SKMessage<SetCameraZoomData> = SKMessage()
     private val showMyLocationButtonMessage: SKMessage<ShowMyLocationButtonData> = SKMessage()
     private val getMapBoundsMessage: SKMessage<GetMapBoundsData> = SKMessage()
+    private val getCurrentLocationMessage: SKMessage<GetCurrentLocationData> = SKMessage()
 
     override fun showMyLocationButton(
         show: Boolean,
@@ -77,6 +90,10 @@ class SKMapViewProxy(
 
     override fun getMapBounds(onResult: (SKMapVC.LatLngBounds) -> Unit) {
         getMapBoundsMessage.post(GetMapBoundsData(onResult))
+    }
+
+    override fun getCurrentLocation(onResult: (LatLng) -> Unit) {
+        getCurrentLocationMessage.post(GetCurrentLocationData(onResult))
     }
 
 
@@ -106,8 +123,11 @@ class SKMapViewProxy(
         fragment: Fragment?,
         binding: MapView
     ): SKMapView = SKMapView(this, activity, fragment, binding).apply {
-        itemsLD.observe {
-            onItems(it)
+        markersLD.observe {
+            onMarkers(it)
+        }
+        linesLD.observe {
+            onLines(it)
         }
         mapInteractionSettingsLD.observe {
             onMapInteractionSettings(it)
@@ -147,8 +167,16 @@ class SKMapViewProxy(
             getMapBounds(it.onResult)
         }
 
+        getCurrentLocationMessage.observe {
+            getCurrentLocation(it.onResult)
+        }
+
         onMapBoundsChangeLD.observe {
             onOnMapBoundsChange(it)
+        }
+
+        showLogLD.observe {
+            onShowLog(it)
         }
     }
 
@@ -175,10 +203,15 @@ class SKMapViewProxy(
         val onResult: (SKMapVC.LatLngBounds) -> Unit
     )
 
+    data class GetCurrentLocationData(
+        val onResult: (LatLng) -> Unit
+    )
+
 }
 
 interface SKMapRAI {
-    fun onItems(items: List<SKMapVC.Marker>)
+    fun onMarkers(markers: List<SKMapVC.Marker>)
+    fun onLines(lines: List<SKMapVC.Line>)
 
     fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
 
@@ -214,4 +247,9 @@ interface SKMapRAI {
     )
 
     fun onMapInteractionSettings(mapInteractionSettings: SKMapVC.MapInteractionSettings)
+
+    fun onShowLog(show: Boolean)
+
+    fun getCurrentLocation(onResult: (LatLng) -> Unit)
+
 }

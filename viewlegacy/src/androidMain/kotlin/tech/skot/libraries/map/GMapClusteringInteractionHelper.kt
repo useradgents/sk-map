@@ -15,13 +15,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import tech.skot.core.SKLog
+import tech.skot.core.toColor
 
 class GMapClusteringInteractionHelper(
     context: Context,
     mapView: MapView,
     memoryCache: LruCache<String, SKMapView.BitmapDescriptorContainer>,
-    val settings : SKMapVC.MapClusteringInteractionSettings
+    val settings: SKMapVC.MapClusteringInteractionSettings
 ) : MapInteractionHelper(context, mapView, memoryCache) {
     private var _clusterManager: ClusterManager<SKClusterMarker>? = null
     private var onMapBoundsChange: ((MapBounds) -> Unit)? = null
@@ -32,7 +32,6 @@ class GMapClusteringInteractionHelper(
     val onClusterClick: ((List<SKMapVC.Marker>) -> Unit)? = settings.onClusterClick
 
 
-
     private var items: List<SKClusterMarker> = emptyList()
 
 
@@ -40,12 +39,10 @@ class GMapClusteringInteractionHelper(
         CoroutineScope(Dispatchers.Main).launch {
             mutext.lock()
             _clusterManager?.let {
-                SKLog.d("getClusterManagerAsync : use current")
                 onReady.invoke(it)
                 mutext.unlock()
             } ?: kotlin.run {
                 mapView.getMapAsync { googleMap ->
-                    SKLog.d("getClusterManagerAsync :  init")
                     val clusterManager = ClusterManager<SKClusterMarker>(context, googleMap)
                     clusterManager.renderer = object : DefaultClusterRenderer<SKClusterMarker>(
                         context,
@@ -54,21 +51,25 @@ class GMapClusteringInteractionHelper(
                     ) {
 
                         override fun getColor(clusterSize: Int): Int {
-                            return settings.getClusterColor?.invoke(clusterSize)?.res?.let { context.resources.getColor(it) }?: super.getColor(clusterSize)
+                            return settings.getClusterColor?.invoke(clusterSize)?.toColor(context)
+                                ?: super.getColor(clusterSize)
                         }
 
                         override fun getBucket(cluster: Cluster<SKClusterMarker>): Int {
-                            return settings.getBucket?.invoke(cluster.size)?:  super.getBucket(cluster)
+                            return settings.getBucket?.invoke(cluster.size) ?: super.getBucket(
+                                cluster
+                            )
                         }
 
                         override fun getClusterText(bucket: Int): String {
-                            return settings.getClusterText?.invoke(bucket)?: super.getClusterText(bucket)
+                            return settings.getClusterText?.invoke(bucket) ?: super.getClusterText(
+                                bucket
+                            )
                         }
 
 
-
                         override fun getMinClusterSize(): Int {
-                            return settings.getMinClusterSize?.invoke()?:  super.getMinClusterSize()
+                            return settings.getMinClusterSize?.invoke() ?: super.getMinClusterSize()
                         }
 
 
@@ -102,7 +103,7 @@ class GMapClusteringInteractionHelper(
                     }
 
                     googleMap.setOnCameraIdleListener {
-                        SKLog.d("AAA OnCameraIdleListener")
+                        MapLoggerView.d("OnCameraIdleListener")
                         clusterManager.onCameraIdle()
                         onMapBoundsChange?.invoke(getMapBounds(googleMap.projection))
                     }
@@ -110,14 +111,14 @@ class GMapClusteringInteractionHelper(
                         it.items.map {
                             it.marker
                         }.let {
-                            SKLog.d("AAA cluster click")
+                            MapLoggerView.d("on cluster click")
                             onClusterClick?.invoke(it)
                         }
                         true
                     }
                     clusterManager.setOnClusterItemClickListener {
                         it.marker.let {
-                            SKLog.d("AAA marker click")
+                            MapLoggerView.d("on marker click ${it.id}")
                             onMarkerClick?.invoke(it)
                         }
                         true

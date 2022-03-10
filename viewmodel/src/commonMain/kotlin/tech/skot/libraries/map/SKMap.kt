@@ -27,7 +27,8 @@ import tech.skot.libraries.map.view.Permissions
 @Suppress("unused")
 class SKMap(
     mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings = SKMapVC.MapNormalInteractionSettings,
-    markersInitial: List<SKMapVC.Marker>,
+    markersInitial: List<SKMapVC.Marker> = emptyList(),
+    linesInitial: List<SKMapVC.Line> = emptyList(),
     selectedMarkerInitial: SKMapVC.Marker? = null,
     selectMarkerOnClickInitial: Boolean = true,
     unselectMarkerOnMapClickInitial: Boolean = true,
@@ -35,6 +36,7 @@ class SKMap(
     onMapClickedInitial: ((LatLng) -> Unit)? = null,
     onMarkerSelectedInitial: ((SKMapVC.Marker?) -> Unit)? = null,
     onMapBoundsChangeInitial: ((SKMapVC.LatLngBounds) -> Unit)? = null,
+    showLogInitial: Boolean = false
 ) : SKComponent<SKMapVC>() {
 
     private val declaredPermissionHelper: DeclaredPermissionHelper = get()
@@ -58,6 +60,7 @@ class SKMap(
     override val view: SKMapVC = skmapViewInjector.sKMap(
         mapInteractionSettingsInitial = mapInteractionSettingsInitial,
         markersInitial = markersInitial,
+        linesInitial = linesInitial,
         selectedMarkerInitial = selectedMarkerInitial,
         selectMarkerOnClickInitial = selectMarkerOnClickInitial,
         unselectMarkerOnMapClickInitial = unselectMarkerOnMapClickInitial,
@@ -65,7 +68,14 @@ class SKMap(
         onMapClickedInitial = internalOnMapClicked,
         onMarkerSelectedInitial = onMarkerSelectedInitial,
         onMapBoundsChangeInitial = onMapBoundsChangeInitial,
+        showLogInitial = showLogInitial
     )
+
+
+    init {
+        MapLogger.enabled = showLogInitial
+    }
+
     private val internalView = view as InternalSKMapVC
 
     var mapInteractionSettings: SKMapVC.MapInteractionSettings
@@ -88,9 +98,17 @@ class SKMap(
     var onMarkerClicked: ((SKMapVC.Marker) -> Unit)? = onMarkerClickedInitial
 
 
+    var showLog: Boolean
+        get() = view.showLog
+        set(value) {
+            view.showLog = value
+        }
+
+
     var unselectMarkerOnMapClick: Boolean
         get() = internalView.unselectMarkerOnMapClick
         set(value) {
+            MapLogger.enabled = value
             internalView.unselectMarkerOnMapClick = value
         }
 
@@ -115,6 +133,16 @@ class SKMap(
         get() = view.markers
         set(value) {
             view.markers = value
+        }
+
+    /**
+     * list of lines
+     */
+    @Suppress("unused")
+    var lines: List<SKMapVC.Line>
+        get() = view.lines
+        set(value) {
+            view.lines = value
         }
 
     /**
@@ -257,6 +285,14 @@ class SKMap(
     @Suppress("unused")
     fun setCameraPosition(pos: LatLng, zoomLevel: Float, animate: Boolean = true) {
         view.setCameraPosition(pos, zoomLevel, animate)
+    }
+
+    /**
+     * getCurrent user Location
+     * @param onResult Lambda called with LatLng position in param
+     */
+    fun getCurrentLocation(onResult: (LatLng) -> Unit) {
+        view.getCurrentLocation(onResult)
     }
 
     private fun List<SKMapVC.Marker>.toPositions(): List<LatLng> = map { it.position }

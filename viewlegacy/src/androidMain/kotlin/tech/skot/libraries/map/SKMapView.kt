@@ -1,21 +1,24 @@
 package tech.skot.libraries.map
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import androidx.collection.LruCache
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
-import tech.skot.core.SKLog
 import tech.skot.core.components.SKActivity
 import tech.skot.core.components.SKComponentView
 import com.google.android.gms.maps.model.LatLng as LatLngGMap
@@ -31,6 +34,9 @@ class SKMapView(
 
     private var mapInteractionHelper: MapInteractionHelper? = null
     private val memoryCache: LruCache<String, BitmapDescriptorContainer>
+    private var fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
+
 
     /**
      * use it to create BitmapDescriptor in case of  [CustomMarker][SKMapVC.CustomMarker] use
@@ -113,8 +119,12 @@ class SKMapView(
         mapInteractionHelper?.onSelectedMarker(selectedMarker)
     }
 
-    override fun onItems(items: List<SKMapVC.Marker>) {
-        mapInteractionHelper?.addMarkers(markers = items)
+    override fun onMarkers(markers: List<SKMapVC.Marker>) {
+        mapInteractionHelper?.addMarkers(markers)
+    }
+
+    override fun onLines(lines: List<SKMapVC.Line>) {
+        mapInteractionHelper?.addLines(lines)
     }
 
     override fun onOnMapClicked(onMapClicked: ((LatLng) -> Unit)?) {
@@ -164,11 +174,32 @@ class SKMapView(
                 this.onMarkerClick = proxy.onMarkerClicked
                 this.onSelectedMarker(proxy.selectedMarker)
                 this.addMarkers(proxy.markers)
+                this.addLines(proxy.lines)
             }
 
 
         }
 
+    }
+
+    override fun onShowLog(show: Boolean) {
+        MapLoggerView.enabled = show
+    }
+
+    override fun getCurrentLocation(onResult: (LatLng) -> Unit) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        fusedLocationClient.lastLocation.addOnSuccessListener {
+            onResult(LatLng(it.latitude, it.longitude))
+        }
     }
 
     override fun setCameraPosition(
@@ -251,10 +282,10 @@ class SKMapView(
                     android.Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                SKLog.d("enabled button :$show")
+                MapLoggerView.d("enabled myLocationButton :$show")
                 it.isMyLocationEnabled = show
             } else {
-                SKLog.d("permission error :$show")
+                MapLoggerView.d("permission error :$show")
                 onPermissionError?.invoke()
             }
         }

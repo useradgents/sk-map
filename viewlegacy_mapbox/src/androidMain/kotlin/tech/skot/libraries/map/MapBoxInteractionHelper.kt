@@ -3,24 +3,20 @@ package tech.skot.libraries.map
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Bitmap
 import androidx.collection.LruCache
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CoordinateBounds
 import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.annotation.AnnotationConfig
-import com.mapbox.maps.plugin.annotation.AnnotationPlugin
-import com.mapbox.maps.plugin.annotation.AnnotationSourceOptions
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.*
-import com.mapbox.maps.plugin.delegates.listeners.OnMapIdleListener
-import com.mapbox.maps.plugin.delegates.listeners.OnStyleLoadedListener
-import com.mapbox.maps.plugin.gestures.addOnFlingListener
-import com.mapbox.maps.plugin.gestures.addOnMapClickListener
-import com.mapbox.maps.plugin.gestures.getGesturesManager
-import com.mapbox.maps.plugin.gestures.getGesturesSettings
-import com.mapbox.maps.plugin.overlay.mapboxOverlay
 import com.mapbox.maps.toCameraOptions
+import tech.skot.core.toColor
+import tech.skot.core.view.Dimen
+import tech.skot.core.view.DimenDP
+import tech.skot.core.view.DimenRef
 
 @SuppressLint("PotentialBehaviorOverride")
 open class MapBoxInteractionHelper(
@@ -30,10 +26,17 @@ open class MapBoxInteractionHelper(
 ) : MapInteractionHelper(context, mapView, memoryCache) {
     private var clickListener: OnPointAnnotationClickListener? = null
     val annotationApi = mapView.annotations
-        //annotationSourceOptions?.clusterOptions?.cluster
-    val pointAnnotationManager = annotationApi.createPointAnnotationManager(AnnotationConfig())
+    val pointAnnotationManager =
+        annotationApi.createPointAnnotationManager(AnnotationConfig(layerId = "marker"))
+    val lineManager = annotationApi.createPolylineAnnotationManager(
+        AnnotationConfig(
+            layerId = "line",
+            belowLayerId = "marker"
+        )
+    )
 
     private var items: List<Pair<SKMapVC.Marker, PointAnnotation>> = emptyList()
+    private var lineItems: List<Pair<SKMapVC.Line, PolylineAnnotation>> = emptyList()
     private var lastSelectedMarker: Pair<SKMapVC.Marker, PointAnnotation>? = null
     override var onMarkerSelected: ((SKMapVC.Marker?) -> Unit)? = null
     override var onMarkerClick: ((SKMapVC.Marker) -> Unit)? = null
@@ -44,6 +47,29 @@ open class MapBoxInteractionHelper(
 
         }
 
+    }
+
+    private fun oldLineStillAvailable(
+        line: SKMapVC.Line,
+        lines: List<SKMapVC.Line>
+    ): Boolean {
+        return if (line.id != null) {
+            lines.any {
+                line.id == it.id
+            }
+        } else {
+            false
+        }
+    }
+
+    private fun newLineAlreadyExist(line: SKMapVC.Line): Boolean {
+        return if (line.id != null) {
+            this.lineItems.any {
+                line.id == it.first.id
+            }
+        } else {
+            false
+        }
     }
 
 
@@ -68,6 +94,74 @@ open class MapBoxInteractionHelper(
         } else {
             false
         }
+    }
+
+    override fun addLines(lines: List<SKMapVC.Line>) {
+        mapView.getMapboxMap { map ->
+
+            //first parts -> items in map still exist in new markers list
+            //second parts -> items in maps no longer exist in new markers list
+            val (oldItemsToUpdate, oldItemsToRemove) = this.lineItems.partition { currentItem ->
+                oldLineStillAvailable(currentItem.first, lines)
+            }
+
+            //first parts -> update
+            //second parts -> add
+            val (newValueForItemsToUpdate, newItemsToAdd) = lines.partition { marker ->
+                newLineAlreadyExist(marker)
+            }
+
+            //items to remove from map
+            oldItemsToRemove.forEach { pair ->
+                if (pair.first.id == lastSelectedMarker?.first?.id) {
+                    lastSelectedMarker = null
+                }
+                lineManager.delete(pair.second)
+            }
+            //items to update on map
+            val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair ->
+                newValueForItemsToUpdate.find {
+                    it.id == currentPair.first.id
+                }?.let {
+                    Pair(it, currentPair.second.apply {
+                        this.points = it.points.map {
+                            Point.fromLngLat(
+                                it.second,
+                                it.first,
+                            )
+                        }
+                        lineColorInt = it.color.toColor(context)
+                        lineWidth = convertLineWidth(it.lineWidth)
+                    })
+                }
+            }
+
+            //items to add to map
+            val optionsToAdd = newItemsToAdd.map { line ->
+                PolylineAnnotationOptions()
+                    .withPoints(line.points.map {
+                        Point.fromLngLat(it.second, it.first)
+                    })
+                    .withLineWidth(
+                        convertLineWidth(line.lineWidth)
+                    )
+                    .withLineColor(line.color.toColor(context))
+            }
+
+            val annotations = lineManager.create(options = optionsToAdd)
+            val addedLines = lines.zip(annotations)
+
+            this.lineItems = updatedMarker + addedLines
+        }
+    }
+
+    private fun convertLineWidth(dimen: Dimen): Double {
+        return when (dimen) {
+            is DimenDP -> dimen.dp.toDouble()
+            is DimenRef -> (context.resources.getDimension(dimen.res) / Resources.getSystem().displayMetrics.density).toDouble()
+            else -> 1.0
+        }
+
     }
 
 
@@ -158,7 +252,7 @@ open class MapBoxInteractionHelper(
 
     override fun onOnMapBoundsChange(onMapBoundsChange: ((SKMapVC.LatLngBounds) -> Unit)?) {
         mapView.getMapboxMap { mapBox ->
-            mapBox.addOnCameraChangeListener{
+            mapBox.addOnCameraChangeListener {
                 val cameraState = mapBox.cameraState
                 val bounds = mapBox.coordinateBoundsForCamera(cameraState.toCameraOptions())
 

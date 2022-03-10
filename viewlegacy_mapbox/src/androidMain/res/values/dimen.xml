@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="skmap_margin_my_location">8dp</dimen>
+
+</resources>

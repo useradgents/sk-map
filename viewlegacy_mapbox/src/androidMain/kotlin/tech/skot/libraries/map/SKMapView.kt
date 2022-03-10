@@ -25,9 +25,9 @@ import com.mapbox.maps.plugin.gestures.addOnMapClickListener
 import com.mapbox.maps.plugin.gestures.removeOnMapClickListener
 import com.mapbox.maps.plugin.locationcomponent.LocationConsumer
 import com.mapbox.maps.plugin.locationcomponent.location
-import tech.skot.core.SKLog
 import tech.skot.core.components.SKActivity
 import tech.skot.core.components.SKComponentView
+import tech.skot.libraries.skmap.viewlegacy.R
 
 
 class SKMapView(
@@ -41,6 +41,30 @@ class SKMapView(
     private var mapInteractionHelper: MapInteractionHelper? = null
     private val memoryCache: LruCache<String, Bitmap>
     private var onMapClick: OnMapClickListener? = null
+
+    val locationConsumer = object : LocationConsumer {
+        override fun onBearingUpdated(
+            vararg bearing: Double,
+            options: (ValueAnimator.() -> Unit)?
+        ) {
+        }
+
+        override fun onLocationUpdated(
+            vararg location: Point,
+            options: (ValueAnimator.() -> Unit)?
+        ) {
+            lastKnownLocation = location.last()
+        }
+
+        override fun onPuckBearingAnimatorDefaultOptionsUpdated(options: ValueAnimator.() -> Unit) {
+        }
+
+        override fun onPuckLocationAnimatorDefaultOptionsUpdated(options: ValueAnimator.() -> Unit) {
+
+        }
+
+    }
+
 
     /**
      * use it to create BitmapDescriptor in case of  [CustomMarker][SKMapVC.CustomMarker] use
@@ -58,7 +82,7 @@ class SKMapView(
             override fun onDestroy(owner: LifecycleOwner) {
                 mapInteractionHelper
                 onMapClick?.let {
-                    mapView.getMapboxMap {  mapBox ->
+                    mapView.getMapboxMap { mapBox ->
                         mapBox.removeOnMapClickListener(it)
                     }
                 }
@@ -85,8 +109,12 @@ class SKMapView(
         mapInteractionHelper?.onSelectedMarker(selectedMarker)
     }
 
-    override fun onItems(items: List<SKMapVC.Marker>) {
-        mapInteractionHelper?.addMarkers(markers = items)
+    override fun onMarkers(markers: List<SKMapVC.Marker>) {
+        mapInteractionHelper?.addMarkers(markers)
+    }
+
+    override fun onLines(lines: List<SKMapVC.Line>) {
+        mapInteractionHelper?.addLines(lines)
     }
 
 
@@ -110,7 +138,6 @@ class SKMapView(
     override fun onOnMarkerClick(onMarkerClick: ((SKMapVC.Marker) -> Unit)?) {
         mapInteractionHelper?.onMarkerClick = onMarkerClick
     }
-
 
 
     override fun onMapInteractionSettings(mapInteractionSettings: SKMapVC.MapInteractionSettings) {
@@ -145,12 +172,19 @@ class SKMapView(
                 this.onMarkerSelected = proxy.onMarkerSelected
                 this.onSelectedMarker(proxy.selectedMarker)
                 this.addMarkers(proxy.markers)
+                this.addLines(proxy.lines)
             }
-
-
-
         }
+    }
 
+    override fun onShowLog(show: Boolean) {
+        MapLoggerView.enabled = show
+    }
+
+    override fun getCurrentLocation(onResult: (LatLng) -> Unit) {
+        lastKnownLocation?.let {
+            onResult(LatLng(it.latitude(), it.longitude()))
+        }
     }
 
 
@@ -161,7 +195,7 @@ class SKMapView(
     ) {
         mapView.getMapboxMap {
             val moveOptions = cameraOptions {
-                center(Point.fromLngLat(position.first, position.second))
+                center(Point.fromLngLat(position.second, position.first))
                 zoom(zoomLevel.toDouble())
             }
             if (animate) {
@@ -268,40 +302,25 @@ class SKMapView(
                     android.Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                SKLog.d("enabled button :$show")
+                MapLoggerView.d("enabled myLocationButton :$show")
                 val button = ImageButton(mapView.context)
-                mapView.addView(button)
-                val params = button.layoutParams as FrameLayout.LayoutParams
-                params.gravity = Gravity.LEFT or Gravity.TOP
+                button.setImageResource(R.drawable.skmap_my_location)
+                val param = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+                )
+                param.gravity = Gravity.RIGHT or Gravity.BOTTOM
+
+                val margin =
+                    activity.resources.getDimensionPixelSize(R.dimen.skmap_margin_my_location)
+                param.setMargins(margin, margin, margin, margin)
+
+                mapView.addView(button, param)
                 mapView.location.enabled = true
                 mapView.location.getLocationProvider()
-                    ?.registerLocationConsumer(object : LocationConsumer {
-                        override fun onBearingUpdated(
-                            vararg bearing: Double,
-                            options: (ValueAnimator.() -> Unit)?
-                        ) {
+                    ?.registerLocationConsumer(locationConsumer)
 
-                        }
-
-                        override fun onLocationUpdated(
-                            vararg location: Point,
-                            options: (ValueAnimator.() -> Unit)?
-                        ) {
-                            lastKnownLocation = location.last()
-                        }
-
-                        override fun onPuckBearingAnimatorDefaultOptionsUpdated(options: ValueAnimator.() -> Unit) {
-
-                        }
-
-                        override fun onPuckLocationAnimatorDefaultOptionsUpdated(options: ValueAnimator.() -> Unit) {
-
-                        }
-
-                    })
                 button.setOnClickListener { view ->
-
-
                     if (lastKnownLocation != null) {
                         mapboxMap.flyTo(
                             cameraOptions {
@@ -312,7 +331,7 @@ class SKMapView(
 
                 }
             } else {
-                SKLog.d("permission error :$show")
+                MapLoggerView.d("permission error :$show")
                 onPermissionError?.invoke()
             }
         }

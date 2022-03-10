@@ -10,7 +10,12 @@ import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptor
-import tech.skot.core.SKLog
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
+import tech.skot.core.toColor
+import tech.skot.core.toPixelSize
+import tech.skot.core.view.Color
 
 abstract class MapInteractionHelper(
     val context: Context,
@@ -18,18 +23,97 @@ abstract class MapInteractionHelper(
     val memoryCache: LruCache<String, SKMapView.BitmapDescriptorContainer>
 ) {
 
-
+    private var lineItems: List<Pair<SKMapVC.Line, Polyline>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
     var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? = null
     abstract fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
     abstract fun addMarkers(markers: List<SKMapVC.Marker>)
+
     abstract fun onOnMapBoundsChange(onMapBoundsChange: ((SKMapVC.LatLngBounds) -> Unit)?)
+
+    private fun oldLineStillAvailable(
+        line: SKMapVC.Line,
+        lines: List<SKMapVC.Line>
+    ): Boolean {
+        return if (line.id != null) {
+            lines.any {
+                line.id == it.id
+            }
+        } else {
+            false
+        }
+    }
+
+    private fun newLineAlreadyExist(line: SKMapVC.Line): Boolean {
+        return if (line.id != null) {
+            this.lineItems.any {
+                line.id == it.first.id
+            }
+        } else {
+            false
+        }
+    }
+
+    fun addLines(lines: List<SKMapVC.Line>) {
+        mapView.getMapAsync { googleMap ->
+
+            //first parts -> items in map still exist in new markers list
+            //second parts -> items in maps no longer exist in new markers list
+            val (oldItemsToUpdate, oldItemsToRemove) = this.lineItems.partition { currentItem ->
+                oldLineStillAvailable(currentItem.first, lines)
+            }
+
+            //first parts -> update
+            //second parts -> add
+            val (newValueForItemsToUpdate, newItemsToAdd) = lines.partition { marker ->
+                newLineAlreadyExist(marker)
+            }
+
+            //items to remove from map
+            oldItemsToRemove.forEach { pair ->
+                pair.second.remove()
+            }
+            //items to update on map
+            val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair ->
+                newValueForItemsToUpdate.find {
+                    it.id == currentPair.first.id
+                }?.let {
+                    Pair(it, currentPair.second.apply {
+                        this.points = it.points.map {
+                            LatLng(it.first, it.second)
+                        }
+                        color = it.color.toColor(context)
+                        width = it.lineWidth.toPixelSize(context).toFloat()
+                    })
+                }
+            }
+
+            //items to add to map
+            val addedLines = newItemsToAdd.map { line ->
+                googleMap.addPolyline(
+                    PolylineOptions()
+                        .addAll(line.points.map {
+                            LatLng(it.first, it.second)
+                        })
+                        .color(line.color.toColor(context))
+                        .width(line.lineWidth.toPixelSize(context).toFloat())
+                ).let {
+                    Pair(line, it)
+                }
+
+            }
+
+            this.lineItems = updatedMarker + addedLines
+
+        }
+
+    }
 
     /**
      * Helper method to obtain BitmapDescriptor from resource.
      * Add compatibility with vector resources
      */
-    fun getBitmap(context: Context, resId: Int, color: Int?): Bitmap? {
+    fun getBitmap(context: Context, resId: Int, color: Color?): Bitmap? {
         val drawable: Drawable? = ContextCompat.getDrawable(context, resId)
             ?.let { if (color != null) it.mutate() else it }
         return drawable?.let {
@@ -42,7 +126,7 @@ abstract class MapInteractionHelper(
 
             color?.let {
                 drawable.colorFilter = PorterDuffColorFilter(
-                    ContextCompat.getColor(context, color),
+                    color.toColor(context),
                     PorterDuff.Mode.MULTIPLY
                 )
             }
@@ -64,12 +148,12 @@ abstract class MapInteractionHelper(
         return when (marker) {
             is SKMapVC.IconMarker -> {
                 memoryCache.get(hash)?.bitmapDescriptor?.apply {
-                    SKLog.d("icon : get icon bitmap ${marker.id} from cache with hash $hash")
+                    MapLoggerView.d("icon : get icon bitmap ${marker.id} from cache with hash $hash")
                 } ?: kotlin.run {
                     if (selected) {
                         getBitmap(context, marker.selectedIcon.res, null)?.let {
                             SKMapView.BitmapDescriptorContainer(it).let {
-                                SKLog.d("icon : put icon bitmap ${marker.id} in cache  with hash $hash")
+                                MapLoggerView.d("icon : put icon bitmap ${marker.id} in cache  with hash $hash")
                                 memoryCache.put(hash, it)
                                 it.bitmapDescriptor
                             }
@@ -77,7 +161,7 @@ abstract class MapInteractionHelper(
                     } else {
                         getBitmap(context, marker.normalIcon.res, null)?.let {
                             SKMapView.BitmapDescriptorContainer(it).let {
-                                SKLog.d("icon : put icon bitmap ${marker.id} in cache  with hash $hash")
+                                MapLoggerView.d("icon : put icon bitmap ${marker.id} in cache  with hash $hash")
                                 memoryCache.put(hash, it)
                                 it.bitmapDescriptor
                             }
@@ -88,20 +172,20 @@ abstract class MapInteractionHelper(
             }
             is SKMapVC.ColorizedIconMarker -> {
                 memoryCache.get(hash)?.bitmapDescriptor?.apply {
-                    SKLog.d("icon : get colorized bitmap ${marker.id} from cache with hash $hash")
+                    MapLoggerView.d("icon : get colorized bitmap ${marker.id} from cache with hash $hash")
                 } ?: kotlin.run {
                     if (selected) {
-                        getBitmap(context, marker.icon.res, marker.selectedColor.res)?.let {
+                        getBitmap(context, marker.icon.res, marker.selectedColor)?.let {
                             SKMapView.BitmapDescriptorContainer(it).let {
-                                SKLog.d("icon : put colorized bitmap ${marker.id} in cache  with hash $hash")
+                                MapLoggerView.d("icon : put colorized bitmap ${marker.id} in cache  with hash $hash")
                                 memoryCache.put(hash, it)
                                 it.bitmapDescriptor
                             }
                         }
                     } else {
-                        getBitmap(context, marker.icon.res, marker.normalColor.res)?.let {
+                        getBitmap(context, marker.icon.res, marker.normalColor)?.let {
                             SKMapView.BitmapDescriptorContainer(it).let {
-                                SKLog.d("icon : put colorized bitmap ${marker.id} in cache  with hash $hash")
+                                MapLoggerView.d("icon : put colorized bitmap ${marker.id} in cache  with hash $hash")
                                 memoryCache.put(hash, it)
                                 it.bitmapDescriptor
                             }
@@ -111,11 +195,11 @@ abstract class MapInteractionHelper(
             }
             is SKMapVC.CustomMarker -> {
                 memoryCache.get(hash)?.bitmapDescriptor?.apply {
-                    SKLog.d("icon : get custom bitmap ${marker.id} from cache with hash $hash")
+                    MapLoggerView.d("icon : get custom bitmap ${marker.id} from cache with hash $hash")
                 } ?: kotlin.run {
                     onCreateCustomMarkerIcon?.invoke(marker, selected)?.let {
                         SKMapView.BitmapDescriptorContainer(it).let {
-                            SKLog.d("icon : put custom bitmap ${marker.id} in cache  with hash $hash")
+                            MapLoggerView.d("icon : put custom bitmap ${marker.id} in cache  with hash $hash")
                             memoryCache.put(hash, it)
                             it.bitmapDescriptor
                         }

@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-    api("com.mapbox.maps:android:10.2.0")
+    api("com.mapbox.maps:android:10.3.0")
 }
 
 
@@ -62,4 +62,3 @@ if (!localPublication) {
         this.sign(publishing.publications)
     }
 }
-

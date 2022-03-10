@@ -5,23 +5,28 @@ import tech.skot.core.components.SKComponentViewMock
 class SKMapViewMock(
     mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
     itemsInitial: List<SKMapVC.Marker>,
+    linesInitial: List<SKMapVC.Line>,
     selectedMarkerInitial: SKMapVC.Marker?,
-    selectMarkerOnClickInitial : Boolean,
-    unselectMarkerOnMapClickInitial : Boolean,
+    selectMarkerOnClickInitial: Boolean,
+    unselectMarkerOnMapClickInitial: Boolean,
     onMarkerClickedInitial: ((SKMapVC.Marker) -> Unit)?,
     onMapClickedInitial: ((Pair<Double, Double>) -> Unit)?,
     onMarkerSelectedInitial: ((SKMapVC.Marker?) -> Unit)?,
     onMapBoundChangeInitial: ((SKMapVC.LatLngBounds) -> Unit)?,
+    showLogInitial: Boolean
 ) : SKComponentViewMock(), InternalSKMapVC {
     override var markers: List<SKMapVC.Marker> = itemsInitial
+    override var lines: List<SKMapVC.Line> = linesInitial
     override var onMapClicked: ((Pair<Double, Double>) -> Unit)? = onMapClickedInitial
     override var onMarkerClicked: ((SKMapVC.Marker) -> Unit)? = onMarkerClickedInitial
     override var onMarkerSelected: ((SKMapVC.Marker?) -> Unit)? = onMarkerSelectedInitial
     override var selectedMarker: SKMapVC.Marker? = selectedMarkerInitial
     override var selectMarkerOnClick: Boolean = selectMarkerOnClickInitial
     override var unselectMarkerOnMapClick: Boolean = unselectMarkerOnMapClickInitial
+    override var showLog: Boolean = showLogInitial
     override var onMapBoundsChange: ((MapBounds) -> Unit)? = onMapBoundChangeInitial
-    override var mapInteractionSettings: SKMapVC.MapInteractionSettings = mapInteractionSettingsInitial
+    override var mapInteractionSettings: SKMapVC.MapInteractionSettings =
+        mapInteractionSettingsInitial
 
     override fun setCameraPosition(
         position: Pair<Double, Double>,
@@ -59,6 +64,12 @@ class SKMapViewMock(
         val onResult: ((SKMapVC.LatLngBounds) -> Unit)?
     )
 
+    val getCurrentLocationCalls = mutableListOf<GetCurrentLocationCall>()
+
+    data class GetCurrentLocationCall(
+        val onResult: ((LatLng) -> Unit)?
+    )
+
     val showMyLocationButtonCalls = mutableListOf<ShowMyLocationButtonCall>()
 
     data class ShowMyLocationButtonCall(
@@ -80,6 +91,10 @@ class SKMapViewMock(
 
     override fun getMapBounds(onResult: (SKMapVC.LatLngBounds) -> Unit) {
         getMapBoundsCalls.add(GetMapBoundsCall(onResult))
+    }
+
+    override fun getCurrentLocation(onResult: (LatLng) -> Unit) {
+        getCurrentLocationCalls.add(GetCurrentLocationCall(onResult))
     }
 
 }

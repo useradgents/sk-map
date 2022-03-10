@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         google()
-//        mavenLocal()
+        mavenLocal()
         mavenCentral()
     }
 
@@ -19,12 +19,6 @@ allprojects {
 
     group = Versions.group
     version = "${Versions.library}_${Versions.framework}"
-
-    repositories {
-        google()
-//        mavenLocal()
-        mavenCentral()
-    }
 
     apply(plugin = "maven-publish")
     apply(plugin = "org.jetbrains.dokka")
