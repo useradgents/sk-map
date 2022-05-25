@@ -25,6 +25,7 @@ interface SKMapVC : SKComponentVC {
     var showLog: Boolean
     var markers: List<Marker>
     var polylines: List<Polyline>
+    var polygons: List<Polygon>
     var onMapBoundsChange: ((MapBounds) -> Unit)?
     var mapInteractionSettings: MapInteractionSettings
 
@@ -81,6 +82,26 @@ interface SKMapVC : SKComponentVC {
         val id: String?,
         val lineWidth: Dimen,
     )
+
+    /**
+     * data class representing a polygon.
+     * @param points sequence of [point][LatLng]
+     * @param color color of polyline
+     * @param id unique id for the polyline
+     * @param lineWidth, [Dimen] representing width of the line
+     * @see [tech.skot.core.view.DimenDP]
+     * @see [tech.skot.core.view.DimenRef]
+     */
+    data class Polygon(
+        val points: List<LatLng>,
+        val fillColor: Color,
+        val strokeColor: Color,
+        val id: String?,
+        val lineWidth: Dimen,
+        val holes : List<List<LatLng>>
+    )
+
+
 
     /**
      * data class representing a marker to show on the map

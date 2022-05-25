@@ -9,6 +9,7 @@ interface SKMapViewInjector {
         mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
         markersInitial: List<SKMapVC.Marker>,
         linesInitial: List<SKMapVC.Polyline>,
+        polygonsInitial: List<SKMapVC.Polygon>,
         selectedMarkerInitial: SKMapVC.Marker?,
         selectMarkerOnClickInitial: Boolean,
         unselectMarkerOnMapClickInitial: Boolean,

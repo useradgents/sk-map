@@ -29,6 +29,7 @@ class SKMap(
     mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings = SKMapVC.MapNormalInteractionSettings,
     markersInitial: List<SKMapVC.Marker> = emptyList(),
     linesInitial: List<SKMapVC.Polyline> = emptyList(),
+    polygonsInitial: List<SKMapVC.Polygon> = emptyList(),
     selectedMarkerInitial: SKMapVC.Marker? = null,
     selectMarkerOnClickInitial: Boolean = true,
     unselectMarkerOnMapClickInitial: Boolean = true,
@@ -67,6 +68,7 @@ class SKMap(
         mapInteractionSettingsInitial = mapInteractionSettingsInitial,
         markersInitial = markersInitial,
         linesInitial = linesInitial,
+        polygonsInitial = polygonsInitial,
         selectedMarkerInitial = selectedMarkerInitial,
         selectMarkerOnClickInitial = selectMarkerOnClickInitial,
         unselectMarkerOnMapClickInitial = unselectMarkerOnMapClickInitial,
@@ -115,7 +117,6 @@ class SKMap(
     var unselectMarkerOnMapClick: Boolean
         get() = internalView.unselectMarkerOnMapClick
         set(value) {
-            MapLogger.enabled = value
             internalView.unselectMarkerOnMapClick = value
         }
 
@@ -159,6 +160,17 @@ class SKMap(
         }
 
     /**
+     * list of lines
+     */
+    @Suppress("unused")
+    var polygons: List<SKMapVC.Polygon>
+        get() = view.polygons
+        set(value) {
+            view.polygons = value
+        }
+
+
+    /**
      * current selected Marker, null if no marker selected
      */
     @Suppress("unused")
@@ -178,22 +190,7 @@ class SKMap(
         set(value) {
             view.onMapBoundsChange = value
         }
-//
-//    private fun setMarkerClick() {
-//        if (onMarkerClicked != null
-//            || internalView.selectMarkerOnClick
-//        ) {
-//            internalView.onMarkerClicked = internalOnMarkerClicked
-//        }
-//    }
-//
-//    private fun setMapClick() {
-//        if (onMapClicked != null
-//            || internalView.unselectMarkerOnMapClick
-//        ) {
-//            internalView.onMapClicked = internalOnMapClicked
-//        }
-//    }
+
 
     /**
      * Show my location button

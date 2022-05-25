@@ -118,6 +118,8 @@ class GMapClusteringInteractionHelper(
                     }
                     clusterManager.setOnClusterItemClickListener {
                         it.marker.let {
+
+
                             MapLoggerView.d("on marker click ${it.id}")
                             onMarkerClick?.invoke(it)
                         }

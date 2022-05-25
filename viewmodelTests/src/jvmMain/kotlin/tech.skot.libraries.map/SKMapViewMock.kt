@@ -6,6 +6,7 @@ class SKMapViewMock(
     mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
     itemsInitial: List<SKMapVC.Marker>,
     linesInitial: List<SKMapVC.Polyline>,
+    polygonsInitial: List<SKMapVC.Polygon>,
     selectedMarkerInitial: SKMapVC.Marker?,
     selectMarkerOnClickInitial: Boolean,
     unselectMarkerOnMapClickInitial: Boolean,
@@ -18,6 +19,7 @@ class SKMapViewMock(
 ) : SKComponentViewMock(), InternalSKMapVC {
     override var markers: List<SKMapVC.Marker> = itemsInitial
     override var polylines: List<SKMapVC.Polyline> = linesInitial
+    override var polygons: List<SKMapVC.Polygon> = polygonsInitial
     override var onMapClicked: ((Pair<Double, Double>) -> Unit)? = onMapClickedInitial
     override var onMapLongClicked: ((Pair<Double, Double>) -> Unit)? = onMapLongClickedInitial
     override var onMarkerClicked: ((SKMapVC.Marker) -> Unit)? = onMarkerClickedInitial

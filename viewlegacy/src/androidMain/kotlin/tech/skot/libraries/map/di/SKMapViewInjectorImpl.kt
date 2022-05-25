@@ -1,16 +1,20 @@
 package tech.skot.libraries.map.di
 
+
 import tech.skot.core.di.BaseInjector
 import tech.skot.core.di.module
 import tech.skot.libraries.map.*
 import tech.skot.libraries.map.view.Permissions
 import tech.skot.libraries.map.view.PermissionsImpl
+import tech.skot.libraries.map.LatLng
+
 
 class SKMapViewInjectorImpl : SKMapViewInjector {
     override fun sKMap(
         mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
         markersInitial: List<SKMapVC.Marker>,
         linesInitial: List<SKMapVC.Polyline>,
+        polygonsInitial: List<SKMapVC.Polygon>,
         selectedMarkerInitial: SKMapVC.Marker?,
         selectMarkerOnClickInitial: Boolean,
         unselectMarkerOnMapClickInitial: Boolean,
@@ -25,6 +29,7 @@ class SKMapViewInjectorImpl : SKMapViewInjector {
             mapInteractionSettingsInitial,
             markersInitial,
             linesInitial,
+            polygonsInitial,
             selectedMarkerInitial,
             selectMarkerOnClickInitial,
             unselectMarkerOnMapClickInitial,

@@ -12,6 +12,7 @@ class SKMapViewProxy(
     mapInteractionSettingsInitial: SKMapVC.MapInteractionSettings,
     markersInitial: List<SKMapVC.Marker>,
     linesInitial: List<SKMapVC.Polyline>,
+    polygonsInitial: List<SKMapVC.Polygon>,
     selectedMarkerInitial: SKMapVC.Marker?,
     selectMarkerOnClickInitial: Boolean,
     unselectMarkerOnMapClickInitial: Boolean,
@@ -33,6 +34,10 @@ class SKMapViewProxy(
 
     private val linesLD: MutableSKLiveData<List<SKMapVC.Polyline>> = MutableSKLiveData(linesInitial)
     override var polylines: List<SKMapVC.Polyline> by linesLD
+
+    private val polygonsLD: MutableSKLiveData<List<SKMapVC.Polygon>> = MutableSKLiveData(polygonsInitial)
+    override var polygons: List<SKMapVC.Polygon> by polygonsLD
+
 
     private val onMapClickedLD: MutableSKLiveData<Function1<LatLng, Unit>?> =
         MutableSKLiveData(onMapClickedInitial)
@@ -134,6 +139,11 @@ class SKMapViewProxy(
         linesLD.observe {
             onLines(it)
         }
+
+        polygonsLD.observe {
+            onPolygons(it)
+        }
+
         mapInteractionSettingsLD.observe {
             onMapInteractionSettings(it)
         }
@@ -221,6 +231,8 @@ class SKMapViewProxy(
 interface SKMapRAI {
     fun onMarkers(markers: List<SKMapVC.Marker>)
     fun onLines(polylines: List<SKMapVC.Polyline>)
+    fun onPolygons(polygons: List<SKMapVC.Polygon>)
+
 
     fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
 

@@ -35,8 +35,16 @@ open class MapBoxInteractionHelper(
         )
     )
 
+    val polygonManager = annotationApi.createPolygonAnnotationManager(
+        AnnotationConfig(
+            layerId = "polygon",
+            belowLayerId = "line"
+        )
+    )
+
     private var items: List<Pair<SKMapVC.Marker, PointAnnotation>> = emptyList()
     private var polylineItems: List<Pair<SKMapVC.Polyline, PolylineAnnotation>> = emptyList()
+    private var polygonItems: List<Pair<SKMapVC.Polygon, PolygonAnnotation>> = emptyList()
     private var lastSelectedMarker: Pair<SKMapVC.Marker, PointAnnotation>? = null
     override var onMarkerSelected: ((SKMapVC.Marker?) -> Unit)? = null
     override var onMarkerClick: ((SKMapVC.Marker) -> Unit)? = null
@@ -48,6 +56,31 @@ open class MapBoxInteractionHelper(
         }
 
     }
+
+    private fun oldPolygonStillAvailable(
+        polyline: SKMapVC.Polygon,
+        polylines: List<SKMapVC.Polygon>
+    ): Boolean {
+        return if (polyline.id != null) {
+            polylines.any {
+                polyline.id == it.id
+            }
+        } else {
+            false
+        }
+    }
+
+    private fun newPolygonAlreadyExist(polyline: SKMapVC.Polygon): Boolean {
+        return if (polyline.id != null) {
+            this.polygonItems.any {
+                polyline.id == it.first.id
+            }
+        } else {
+            false
+        }
+    }
+
+
 
     private fun oldLineStillAvailable(
         polyline: SKMapVC.Polyline,
@@ -154,6 +187,64 @@ open class MapBoxInteractionHelper(
             this.polylineItems = updatedMarker + addedLines
         }
     }
+
+    override fun addPolygons(polygons: List<SKMapVC.Polygon>) {
+        mapView.getMapboxMap { map ->
+
+            //first parts -> items in map still exist in new markers list
+            //second parts -> items in maps no longer exist in new markers list
+            val (oldItemsToUpdate, oldItemsToRemove) = this.polygonItems.partition { currentItem ->
+                oldPolygonStillAvailable(currentItem.first, polygons)
+            }
+
+            //first parts -> update
+            //second parts -> add
+            val (newValueForItemsToUpdate, newItemsToAdd) = polygons.partition { marker ->
+                newPolygonAlreadyExist(marker)
+            }
+
+            //items to remove from map
+            oldItemsToRemove.forEach { pair ->
+                if (pair.first.id == lastSelectedMarker?.first?.id) {
+                    lastSelectedMarker = null
+                }
+                polygonManager.delete(pair.second)
+            }
+            //items to update on map
+            val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair ->
+                newValueForItemsToUpdate.find {
+                    it.id == currentPair.first.id
+                }?.let {
+                    Pair(it, currentPair.second.apply {
+                        this.points = listOf(it.points.map {
+                            Point.fromLngLat(
+                                it.second,
+                                it.first,
+                            )
+                        })
+                        fillColorInt = it.fillColor.toColor(context)
+                       // lineWidth = convertLineWidth(it.lineWidth)
+                    })
+                }
+            }
+
+            //items to add to map
+            val optionsToAdd = newItemsToAdd.map { line ->
+                PolygonAnnotationOptions()
+                    .withPoints(listOf(line.points.map {
+                        Point.fromLngLat(it.second, it.first)
+                    }))
+                    .withFillColor(line.fillColor.toColor(context))
+                   // .withLineColor(line.strokeColor.toColor(context))
+            }
+
+            val annotations = polygonManager.create(options = optionsToAdd)
+            val addedLines = polygons.zip(annotations)
+
+            this.polygonItems = updatedMarker + addedLines
+        }
+    }
+
 
     private fun convertLineWidth(dimen: Dimen): Double {
         return when (dimen) {

@@ -79,7 +79,6 @@ class SKMapView(
 
         lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onDestroy(owner: LifecycleOwner) {
-                mapInteractionHelper
                 onMapClick?.let {
                     mapView.getMapboxMap { mapBox ->
                         mapBox.removeOnMapClickListener(it)
@@ -114,6 +113,10 @@ class SKMapView(
 
     override fun onLines(polylines: List<SKMapVC.Polyline>) {
         mapInteractionHelper?.addLines(polylines)
+    }
+
+    override fun onPolygons(polygons: List<SKMapVC.Polygon>) {
+        mapInteractionHelper?.addPolygons(polygons)
     }
 
 

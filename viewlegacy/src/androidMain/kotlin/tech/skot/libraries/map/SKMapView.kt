@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import tech.skot.core.components.SKActivity
 import tech.skot.core.components.SKComponentView
 import com.google.android.gms.maps.model.LatLng as LatLngGMap
+import tech.skot.libraries.map.LatLng
 
 
 class SKMapView(
@@ -126,6 +127,12 @@ class SKMapView(
     override fun onLines(polylines: List<SKMapVC.Polyline>) {
         mapInteractionHelper?.addLines(polylines)
     }
+
+    override fun onPolygons(polygons: List<SKMapVC.Polygon>) {
+        mapInteractionHelper?.addPolygons(polygons)
+    }
+
+
 
     override fun onOnMapClicked(onMapClicked: ((LatLng) -> Unit)?) {
         mapView.getMapAsync {

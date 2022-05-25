@@ -8,14 +8,12 @@ import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
 import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Polyline
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.MapView import com.google.android.gms.maps.model.*
 import tech.skot.core.toColor
 import tech.skot.core.toPixelSize
 import tech.skot.core.view.Color
+import com.google.android.gms.maps.model.LatLng as LatLngGMap
+import tech.skot.libraries.map.LatLng
 
 abstract class MapInteractionHelper(
     val context: Context,
@@ -24,6 +22,7 @@ abstract class MapInteractionHelper(
 ) {
 
     private var polylineItems: List<Pair<SKMapVC.Polyline, Polyline>> = emptyList()
+    private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
     var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? = null
     abstract fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
@@ -44,6 +43,31 @@ abstract class MapInteractionHelper(
         }
     }
 
+    private fun oldPolygonStillAvailable(
+        polygon: SKMapVC.Polygon,
+        polygons: List<SKMapVC.Polygon>
+    ): Boolean {
+        return if (polygon.id != null) {
+            polygons.any {
+                polygon.id == it.id
+            }
+        } else {
+            false
+        }
+    }
+
+
+    private fun newPolygonAlreadyExist(polygon: SKMapVC.Polygon): Boolean {
+        return if (polygon.id != null) {
+            this.polygonItems.any {
+                polygon.id == it.first.id
+            }
+        } else {
+            false
+        }
+    }
+
+
     private fun newLineAlreadyExist(polyline: SKMapVC.Polyline): Boolean {
         return if (polyline.id != null) {
             this.polylineItems.any {
@@ -53,6 +77,62 @@ abstract class MapInteractionHelper(
             false
         }
     }
+
+    fun addPolygons(polygons : List<SKMapVC.Polygon>){
+        mapView.getMapAsync { googleMap ->
+            //first parts -> items in map still exist in new markers list
+            //second parts -> items in maps no longer exist in new markers list
+            val (oldItemsToUpdate, oldItemsToRemove) = this.polygonItems.partition { currentItem ->
+                oldPolygonStillAvailable(currentItem.first, polygons)
+            }
+
+            //first parts -> update
+            //second parts -> add
+            val (newValueForItemsToUpdate, newItemsToAdd) = polygons.partition { marker ->
+                newPolygonAlreadyExist(marker)
+            }
+
+            //items to remove from map
+            oldItemsToRemove.forEach { pair ->
+                pair.second.remove()
+            }
+            //items to update on map
+            val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair : Pair<SKMapVC.Polygon, Polygon> ->
+                newValueForItemsToUpdate.find {
+                    it.id == currentPair.first.id
+                }?.let {
+                    Pair(it, currentPair.second.apply {
+                        this.points = it.points.map {
+                            LatLngGMap(it.first, it.second)
+                        }
+                        fillColor = it.fillColor.toColor(context)
+                        strokeColor = it.strokeColor.toColor(context)
+                        strokeWidth = it.lineWidth.toPixelSize(context).toFloat()
+                    })
+                }
+            }
+
+            //items to add to map
+            val addedLines = newItemsToAdd.map { polygon ->
+                googleMap.addPolygon(
+                    PolygonOptions()
+                        .addAll(polygon.points.map {
+                            LatLngGMap(it.first, it.second)
+                        })
+                        .fillColor(polygon.fillColor.toColor(context))
+                        .strokeColor(polygon.strokeColor.toColor(context))
+                        .strokeWidth(polygon.lineWidth.toPixelSize(context).toFloat())
+                ).let {
+                    Pair(polygon, it)
+                }
+
+            }
+
+            this.polygonItems = updatedMarker + addedLines
+
+        }
+    }
+
 
     fun addLines(polylines: List<SKMapVC.Polyline>) {
         mapView.getMapAsync { googleMap ->
@@ -80,7 +160,7 @@ abstract class MapInteractionHelper(
                 }?.let {
                     Pair(it, currentPair.second.apply {
                         this.points = it.points.map {
-                            LatLng(it.first, it.second)
+                            LatLngGMap(it.first, it.second)
                         }
                         color = it.color.toColor(context)
                         width = it.lineWidth.toPixelSize(context).toFloat()
@@ -93,7 +173,7 @@ abstract class MapInteractionHelper(
                 googleMap.addPolyline(
                     PolylineOptions()
                         .addAll(line.points.map {
-                            LatLng(it.first, it.second)
+                            LatLngGMap(it.first, it.second)
                         })
                         .color(line.color.toColor(context))
                         .width(line.lineWidth.toPixelSize(context).toFloat())
