@@ -49,6 +49,14 @@ class SKMapView(
             mapInteractionHelper?.onCreateCustomMarkerIcon = value
         }
 
+
+    @Suppress("unused")
+    var getMarkerAnchor : ((SKMapVC.Marker, selected: Boolean) -> Pair<Float, Float>?)? = null
+        set(value) {
+            field = value
+            mapInteractionHelper?.getMarkerAnchor = value
+        }
+
     init {
         lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onDestroy(owner: LifecycleOwner) {
@@ -189,6 +197,7 @@ class SKMapView(
                 }
             }.apply {
                 this.onCreateCustomMarkerIcon = this@SKMapView.onCreateCustomMarkerIcon
+                this.getMarkerAnchor = this@SKMapView.getMarkerAnchor
                 this.onOnMapBoundsChange(proxy.onMapBoundsChange)
                 this.onMarkerClick = proxy.onMarkerClicked
                 this.onSelectedMarker(proxy.selectedMarker)

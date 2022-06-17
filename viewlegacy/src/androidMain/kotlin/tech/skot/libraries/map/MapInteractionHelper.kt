@@ -25,6 +25,7 @@ abstract class MapInteractionHelper(
     private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
     var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? = null
+    var getMarkerAnchor: ((SKMapVC.Marker, selected: Boolean) -> Pair<Float, Float>?)? = null
     abstract fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
     abstract fun addMarkers(markers: List<SKMapVC.Marker>)
 
@@ -105,6 +106,7 @@ abstract class MapInteractionHelper(
                         this.points = it.points.map {
                             LatLngGMap(it.first, it.second)
                         }
+                        this.isVisible = !it.hidden
                         fillColor = it.fillColor.toColor(context)
                         strokeColor = it.strokeColor.toColor(context)
                         strokeWidth = it.lineWidth.toPixelSize(context).toFloat()
@@ -119,6 +121,7 @@ abstract class MapInteractionHelper(
                         .addAll(polygon.points.map {
                             LatLngGMap(it.first, it.second)
                         })
+                        .visible(!polygon.hidden)
                         .fillColor(polygon.fillColor.toColor(context))
                         .strokeColor(polygon.strokeColor.toColor(context))
                         .strokeWidth(polygon.lineWidth.toPixelSize(context).toFloat())
@@ -162,6 +165,7 @@ abstract class MapInteractionHelper(
                         this.points = it.points.map {
                             LatLngGMap(it.first, it.second)
                         }
+                        isVisible = !it.hidden
                         color = it.color.toColor(context)
                         width = it.lineWidth.toPixelSize(context).toFloat()
                     })
@@ -175,6 +179,7 @@ abstract class MapInteractionHelper(
                         .addAll(line.points.map {
                             LatLngGMap(it.first, it.second)
                         })
+                        .visible(!line.hidden)
                         .color(line.color.toColor(context))
                         .width(line.lineWidth.toPixelSize(context).toFloat())
                 ).let {

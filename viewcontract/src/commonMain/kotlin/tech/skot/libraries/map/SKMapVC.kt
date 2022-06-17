@@ -81,6 +81,7 @@ interface SKMapVC : SKComponentVC {
         val color: Color,
         val id: String?,
         val lineWidth: Dimen,
+        val hidden: Boolean = false
     )
 
     /**
@@ -98,7 +99,8 @@ interface SKMapVC : SKComponentVC {
         val strokeColor: Color,
         val id: String?,
         val lineWidth: Dimen,
-        val holes : List<List<LatLng>>
+        val holes : List<List<LatLng>>,
+        val hidden: Boolean = false
     )
 
 
@@ -113,7 +115,8 @@ interface SKMapVC : SKComponentVC {
         open val id: String?,
         open val position: LatLng,
         open val onMarkerClick: (() -> Unit)?,
-        open val iconHash: (selected: Boolean) -> String
+        open val iconHash: (selected: Boolean) -> String,
+        open val hidden: Boolean = false
     )
 
     /**
@@ -121,21 +124,27 @@ interface SKMapVC : SKComponentVC {
      * @param itemId unique id for the marker, used to update position
      * @param position a [Pair] of [Double] representing the location of the marker
      * @param onMarkerClick a function type called when marker is clicked
-     * @param normalIcon the [Icon] to use when marker is not selected, null to use google mapView default icon
-     * @param selectedIcon the [Icon] to use when marker is selected, null to use google mapView default icon
+     * @param normalIcon the [Icon] to use when marker is not selected
+     * @param selectedIcon the [Icon] to use when marker is selected
      * @see Marker
      * @see ColorizedIconMarker
      * @see CustomMarker
      */
-    open class IconMarker(
+    data class IconMarker(
         override val id: String?,
-        open val normalIcon: Icon,
-        open val selectedIcon: Icon,
+        val normalIcon: Icon,
+        val selectedIcon: Icon,
         override val position: LatLng,
-        override val onMarkerClick: (() -> Unit)? = null
-    ) : Marker(id, position, onMarkerClick, { selected ->
-        "normal_${if (selected) selectedIcon.toString() else normalIcon.toString()}"
-    })
+        override val onMarkerClick: (() -> Unit)? = null,
+        override val hidden: Boolean = false
+    ) : Marker(
+        id = id,
+        position = position,
+        onMarkerClick = onMarkerClick,
+        iconHash = { selected ->
+            "normal_${if (selected) selectedIcon.toString() else normalIcon.toString()}"
+        }
+    )
 
     /**
      * data class representing a marker to show on map.
@@ -150,13 +159,14 @@ interface SKMapVC : SKComponentVC {
      * @see IconMarker
      * @see CustomMarker
      */
-    class ColorizedIconMarker(
+    data class ColorizedIconMarker(
         override val id: String?,
         val icon: Icon,
         val normalColor: Color,
         val selectedColor: Color,
         override val position: LatLng,
-        override val onMarkerClick: (() -> Unit)? = null
+        override val onMarkerClick: (() -> Unit)? = null,
+        override val hidden: Boolean = false
     ) : Marker(id, position, onMarkerClick, { selected ->
         "colorized_${icon}_${if (selected) normalColor.toString() else selectedColor.toString()}"
     })
@@ -178,7 +188,8 @@ interface SKMapVC : SKComponentVC {
         val data: Any,
         override val position: LatLng,
         override val onMarkerClick: (() -> Unit)? = null,
-        override val iconHash: (selected: Boolean) -> String
+        override val iconHash: (selected: Boolean) -> String,
+        override val hidden: Boolean = false
     ) : Marker(id, position, onMarkerClick, iconHash)
 
     /**

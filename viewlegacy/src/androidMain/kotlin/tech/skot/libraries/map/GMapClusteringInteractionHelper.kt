@@ -6,6 +6,7 @@ import androidx.collection.LruCache
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.Projection
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.Cluster
@@ -159,15 +160,101 @@ class GMapClusteringInteractionHelper(
         this.onMapBoundsChange = onMapBoundsChange
     }
 
+    private fun oldMarkerStillAvailable(
+        marker: SKClusterMarker,
+        markers: List<SKMapVC.Marker>
+    ): Boolean {
+        return if (marker.marker.id != null) {
+            markers.any {
+                marker.marker.id == it.id
+            }
+        } else {
+            false
+        }
+    }
+
+    private fun newMarkerAlreadyExist(marker: SKMapVC.Marker): Boolean {
+        return if (marker.id != null) {
+            this.items.any {
+                marker.id == it.marker.id
+            }
+        } else {
+            false
+        }
+    }
+
+
     override fun addMarkers(markers: List<SKMapVC.Marker>) {
-        getClusterManagerAsync {
-            //todo update instead of remove all
-            it.clearItems()
-            items = markers.map { marker ->
+        getClusterManagerAsync { clusterManager ->
+
+            //first parts -> items in map still exist in new markers list
+            //second parts -> items in maps no longer exist in new markers list
+            val (oldItemsToUpdate, oldItemsToRemove) = this.items.partition { currentItem ->
+                oldMarkerStillAvailable(currentItem, markers)
+            }
+
+            //first parts -> update
+            //second parts -> add
+            val (newValueForItemsToUpdate, newItemsToAdd) = markers.partition { marker ->
+                newMarkerAlreadyExist(marker)
+            }
+
+            val (hiddenMarkerUpdate, visibleMarkerUpdate) = newValueForItemsToUpdate.partition { marker ->
+                marker.hidden
+            }
+
+            val (hiddenNewMarkerUpdate , visibleNewMarker) = newItemsToAdd.partition { marker ->
+                marker.hidden
+            }
+
+
+            //remove items not in new list
+            if (oldItemsToRemove.any { it.marker.id == lastSelectedMarker?.marker?.id }) {
+                lastSelectedMarker = null
+            }
+            clusterManager.removeItems(oldItemsToRemove)
+
+            //hide items
+            val updateHidden = hiddenMarkerUpdate.mapNotNull { marker ->
+                oldItemsToUpdate.find {
+                    it.marker.id == marker.id
+                }?.let {
+                    clusterManager.removeItem(it)
+                    if(marker.id == lastSelectedMarker?.marker?.id){
+                        lastSelectedMarker = null
+                    }
+                    it.marker = marker
+                    it
+                }
+            }
+
+            val updateVisble = visibleMarkerUpdate.mapNotNull { marker ->
+                oldItemsToUpdate.find {
+                    it.marker.id == marker.id
+                }?.let {
+                    if(!it.marker.hidden){
+                        it.marker = marker
+                        clusterManager.updateItem(it)
+                    }else{
+                        it.marker = marker
+                        clusterManager.addItem(it)
+                    }
+                    it
+                }
+            }
+
+            val addHidden = hiddenNewMarkerUpdate.map { marker ->
                 SKClusterMarker(marker, false)
             }
-            it.addItems(items)
-            it.cluster()
+
+            val addVisible = visibleNewMarker.map { marker ->
+                SKClusterMarker(marker, false)
+            }
+            clusterManager.addItems(addVisible)
+
+            items = addVisible +  addHidden + updateVisble + updateHidden
+
+            clusterManager.cluster()
         }
     }
 

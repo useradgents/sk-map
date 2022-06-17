@@ -1,15 +1,22 @@
 package tech.skot.libraries.map
 
 
+import android.R
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
+import android.view.LayoutInflater
+import android.view.View
 import androidx.collection.LruCache
-
+import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.Projection
 import com.google.android.gms.maps.model.*
+import tech.skot.libraries.map.LatLng as SkLatLng
 import com.google.android.gms.maps.model.LatLng
+
+
 
 @SuppressLint("PotentialBehaviorOverride")
 open class GMapInteractionHelper(
@@ -22,20 +29,40 @@ open class GMapInteractionHelper(
     private var items: List<Pair<SKMapVC.Marker, Marker>> = emptyList()
     private var lastSelectedMarker: Pair<SKMapVC.Marker, Marker>? = null
     override var onMarkerClick: ((SKMapVC.Marker) -> Unit)? = null
+    private val infoWindowView = View(context)
+    private val adapter = MapWindowAdapter()
 
     init {
         mapView.getMapAsync {
+            it.setInfoWindowAdapter(adapter)
             it.setOnMarkerClickListener { clickedMarker ->
                 val item = items.find { (_, marker) ->
                     marker == clickedMarker
                 }
                 item?.let {
                     onMarkerClick?.invoke(item.first)
+                    item.second.showInfoWindow()
                 }
                 true
             }
         }
     }
+
+
+    inner class MapWindowAdapter() :
+        InfoWindowAdapter {
+
+        // Hack to prevent info window from displaying: use a 0dp/0dp frame
+        override fun getInfoWindow(marker: Marker): View {
+            return infoWindowView
+        }
+
+        override fun getInfoContents(marker: Marker): View? {
+            return null
+        }
+
+    }
+
 
     private fun oldMarkerStillAvailable(
         marker: SKMapVC.Marker,
@@ -92,8 +119,15 @@ open class GMapInteractionHelper(
                             it.position.first,
                             it.position.second
                         )
+                        isVisible = !it.hidden
 
-                        getIcon(it, lastSelectedMarker?.first?.id == it.id)?.let {
+                        val isSelected = lastSelectedMarker?.first?.id == it.id
+
+                        getMarkerAnchor?.invoke(it,isSelected)?.let {
+                            setAnchor(it.first, it.second)
+                        }
+
+                        getIcon(it, isSelected)?.let {
                             this.setIcon(it)
                         }
                     })
@@ -102,6 +136,9 @@ open class GMapInteractionHelper(
 
             //items to add to map
             val addedMarker = newItemsToAdd.mapNotNull { skMarker ->
+
+                val anchor = getMarkerAnchor?.invoke(skMarker,false)
+
                 val marker = map.addMarker(
                     MarkerOptions()
                         .position(
@@ -109,7 +146,10 @@ open class GMapInteractionHelper(
                                 skMarker.position.first,
                                 skMarker.position.second
                             )
-                        ).apply {
+                        )
+                        .anchor(anchor?.first?:0.5f,anchor?.second?:1f)
+                        .visible(!skMarker.hidden)
+                        .apply {
                             getIcon(skMarker, false)?.let {
                                 this.icon(it)
                             }
