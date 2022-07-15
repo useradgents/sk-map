@@ -17,6 +17,7 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.CoordinateBounds
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
+import com.mapbox.maps.Style
 import com.mapbox.maps.dsl.cameraOptions
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadedListener
@@ -102,6 +103,17 @@ class SKMapView(
             }
     }
 
+    override fun onMapType(mapType : MapType) {
+        mapView.getMapboxMap {
+            when(mapType){
+                MapType.NORMAL ->   it.loadStyleUri(Style.MAPBOX_STREETS)
+                MapType.SATELLITE ->   it.loadStyleUri(Style.SATELLITE)
+                MapType.HYBRID ->   it.loadStyleUri(Style.SATELLITE_STREETS)
+                MapType.TERRAIN -> it.loadStyleUri(Style.OUTDOORS)
+                else ->  it.loadStyleUri(Style.MAPBOX_STREETS)
+            }
+        }
+    }
 
     override fun onSelectedMarker(selectedMarker: SKMapVC.Marker?) {
         mapInteractionHelper?.onSelectedMarker(selectedMarker)

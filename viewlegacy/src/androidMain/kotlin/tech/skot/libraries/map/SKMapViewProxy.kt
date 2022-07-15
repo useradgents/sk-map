@@ -21,7 +21,8 @@ class SKMapViewProxy(
     onMapClickedInitial: Function1<LatLng, Unit>?,
     onMapLongClickedInitial: Function1<LatLng, Unit>?,
     onMapBoundsChangeInitial: Function1<SKMapVC.LatLngBounds, Unit>?,
-    showLogInitial: Boolean
+    showLogInitial: Boolean,
+    mapTypeInitial : MapType
 ) : SKComponentViewProxy<MapView>(), InternalSKMapVC {
 
     private val mapInteractionSettingsLD: MutableSKLiveData<SKMapVC.MapInteractionSettings> =
@@ -64,6 +65,10 @@ class SKMapViewProxy(
     private val showLogLD: MutableSKLiveData<Boolean> =
         MutableSKLiveData(showLogInitial)
     override var showLog: Boolean by showLogLD
+
+    private val mapTypeLD: MutableSKLiveData<MapType> =
+        MutableSKLiveData(mapTypeInitial)
+    override var mapType: MapType by mapTypeLD
 
     private val unselectMarkerOnMapClickLD: MutableSKLiveData<Boolean> =
         MutableSKLiveData(unselectMarkerOnMapClickInitial)
@@ -196,6 +201,10 @@ class SKMapViewProxy(
         showLogLD.observe {
             onShowLog(it)
         }
+
+        mapTypeLD.observe {
+            onMapType(it)
+        }
     }
 
 
@@ -272,6 +281,8 @@ interface SKMapRAI {
     fun onMapInteractionSettings(mapInteractionSettings: SKMapVC.MapInteractionSettings)
 
     fun onShowLog(show: Boolean)
+
+    fun onMapType(mapType : MapType)
 
     fun getCurrentLocation(onResult: (LatLng) -> Unit)
 

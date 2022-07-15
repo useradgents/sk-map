@@ -2,6 +2,7 @@ package tech.skot.libraries.map.di
 
 import tech.skot.core.di.get
 import tech.skot.libraries.map.LatLng
+import tech.skot.libraries.map.MapType
 import tech.skot.libraries.map.SKMapVC
 
 interface SKMapViewInjector {
@@ -18,7 +19,8 @@ interface SKMapViewInjector {
         onMapClickedInitial: Function1<LatLng, Unit>?,
         onMapLongClickedInitial: Function1<LatLng, Unit>?,
         onMapBoundsChangeInitial: Function1<SKMapVC.LatLngBounds, Unit>?,
-        showLogInitial: Boolean
+        showLogInitial: Boolean,
+        mapType: MapType
     ): SKMapVC
 }
 

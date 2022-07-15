@@ -23,7 +23,8 @@ class SKMapViewInjectorImpl : SKMapViewInjector {
         onMapClickedInitial: Function1<LatLng, Unit>?,
         onMapLongClickedInitial: Function1<LatLng, Unit>?,
         onMapBoundsChangeInitial: Function1<SKMapVC.LatLngBounds, Unit>?,
-        showLogInitial: Boolean
+        showLogInitial: Boolean,
+        mapTypeInitital : MapType
     ): SKMapVC =
         SKMapViewProxy(
             mapInteractionSettingsInitial,
@@ -38,7 +39,8 @@ class SKMapViewInjectorImpl : SKMapViewInjector {
             onMapClickedInitial,
             onMapLongClickedInitial,
             onMapBoundsChangeInitial,
-            showLogInitial
+            showLogInitial,
+            mapTypeInitital
         )
 }
 

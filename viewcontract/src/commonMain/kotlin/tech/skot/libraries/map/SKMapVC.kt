@@ -16,11 +16,11 @@ import tech.skot.libraries.map.SKMapVC.Marker
  * @property mapInteractionSettings [MapInteractionSettings][SKMapVC.MapInteractionSettings] to use on map, Any of [MapNormalInteractionSettings][SKMapVC.MapNormalInteractionSettings], [MapClusteringInteractionSettings][SKMapVC.MapClusteringInteractionSettings] or [MapCustomInteractionSettings][SKMapVC.MapCustomInteractionSettings]
  * @property selectedMarker the currentSelected Marker, use it to select a marker instead of previous, or to unselect
  * @property onMapBoundsChange called each time [MapBounds][SKMapVC.LatLngBounds] change (when mapview is idle)
+ * @property mapType the type of tiles shown [MapType]
  *
  */
 @SKLayoutIsSimpleView
 interface SKMapVC : SKComponentVC {
-
 
     var showLog: Boolean
     var markers: List<Marker>
@@ -28,6 +28,7 @@ interface SKMapVC : SKComponentVC {
     var polygons: List<Polygon>
     var onMapBoundsChange: ((MapBounds) -> Unit)?
     var mapInteractionSettings: MapInteractionSettings
+    var mapType : MapType
 
     /**
      *  function to call for moving camera on another location
@@ -233,6 +234,16 @@ interface SKMapVC : SKComponentVC {
         MapInteractionSettings()
 
     object MapNormalInteractionSettings : MapInteractionSettings()
+}
+
+
+enum class MapType {
+    NORMAL,
+    SATELLITE,
+    HYBRID,
+    TERRAIN,
+    NONE
+
 }
 
 interface InternalSKMapVC : SKMapVC {

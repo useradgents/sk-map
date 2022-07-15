@@ -35,10 +35,12 @@ class SKMap(
     unselectMarkerOnMapClickInitial: Boolean = true,
     onMarkerClickedInitial: ((SKMapVC.Marker) -> Unit)? = null,
     onMapClickedInitial: ((LatLng) -> Unit)? = null,
-    onMapLongClickedInitial:  ((LatLng) -> Unit)? = null,
+    onMapLongClickedInitial: ((LatLng) -> Unit)? = null,
     onMarkerSelectedInitial: ((SKMapVC.Marker?) -> Unit)? = null,
     onMapBoundsChangeInitial: ((SKMapVC.LatLngBounds) -> Unit)? = null,
-    showLogInitial: Boolean = false
+    showLogInitial: Boolean = false,
+    mapTypeInitial: MapType = MapType.NORMAL
+
 ) : SKComponent<SKMapVC>() {
 
     private val declaredPermissionHelper: DeclaredPermissionHelper = get()
@@ -77,8 +79,15 @@ class SKMap(
         onMapLongClickedInitial = internalOnMapLongClicked,
         onMarkerSelectedInitial = onMarkerSelectedInitial,
         onMapBoundsChangeInitial = onMapBoundsChangeInitial,
-        showLogInitial = showLogInitial
+        showLogInitial = showLogInitial,
+        mapType = mapTypeInitial
     )
+
+    var mapType: MapType
+        get() = view.mapType
+        set(value) {
+            view.mapType = value
+        }
 
 
     init {

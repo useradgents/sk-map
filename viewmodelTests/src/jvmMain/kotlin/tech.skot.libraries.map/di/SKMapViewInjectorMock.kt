@@ -19,7 +19,8 @@ class SKMapViewInjectorMock : SKMapViewInjector {
         onMapClickedInitial: ((LatLng) -> Unit)?,
         onMapLongClickedInitial: ((LatLng) -> Unit)?,
         onMapBoundsChangeInitial: ((SKMapVC.LatLngBounds) -> Unit)?,
-        showLogInitial: Boolean
+        showLogInitial: Boolean,
+        mapTypeInitial: MapType
     ): SKMapVC {
         return SKMapViewMock(
             mapInteractionSettingsInitial,
@@ -34,7 +35,8 @@ class SKMapViewInjectorMock : SKMapViewInjector {
             onMapLongClickedInitial,
             onMarkerSelectedInitial,
             onMapBoundsChangeInitial,
-            showLogInitial
+            showLogInitial,
+            mapTypeInitial
         )
     }
 

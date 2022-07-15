@@ -15,10 +15,12 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
 import tech.skot.core.components.SKActivity
 import tech.skot.core.components.SKComponentView
 import com.google.android.gms.maps.model.LatLng as LatLngGMap
@@ -140,6 +142,19 @@ class SKMapView(
         mapInteractionHelper?.addPolygons(polygons)
     }
 
+    override fun onMapType(mapType : MapType) {
+        mapView.getMapAsync {
+            when(mapType){
+                MapType.NORMAL ->  it.mapType = GoogleMap.MAP_TYPE_NORMAL
+                MapType.SATELLITE ->   it.mapType = GoogleMap.MAP_TYPE_SATELLITE
+                MapType.HYBRID ->  it.mapType = GoogleMap.MAP_TYPE_HYBRID
+                MapType.TERRAIN ->  it.mapType = GoogleMap.MAP_TYPE_TERRAIN
+                MapType.NONE ->  it.mapType = GoogleMap.MAP_TYPE_NONE
+            }
+
+        }
+    }
+
 
 
     override fun onOnMapClicked(onMapClicked: ((LatLng) -> Unit)?) {
@@ -236,31 +251,35 @@ class SKMapView(
         animate: Boolean
     ) {
         mapView.getMapAsync {
-            val cameraUpdate =
-                CameraUpdateFactory.newLatLngZoom(
-                    com.google.android.gms.maps.model.LatLng(position.first, position.second),
-                    zoomLevel
-                )
-            if (animate) {
-                it.animateCamera(cameraUpdate)
-            } else {
-                it.moveCamera(cameraUpdate)
+            it.setOnMapLoadedCallback {
+                val cameraUpdate =
+                    CameraUpdateFactory.newLatLngZoom(
+                        com.google.android.gms.maps.model.LatLng(position.first, position.second),
+                        zoomLevel
+                    )
+                if (animate) {
+                    it.animateCamera(cameraUpdate)
+                } else {
+                    it.moveCamera(cameraUpdate)
+                }
             }
         }
     }
 
     override fun centerOnPositions(positions: List<LatLng>) {
         if (positions.isNotEmpty()) {
-            val latLngBoundsBuilder = LatLngBounds.builder()
-            positions.forEach {
-                latLngBoundsBuilder.include(LatLngGMap(it.first, it.second))
-            }
-            mapView.getMapAsync {
-                val latLngBound = CameraUpdateFactory.newLatLngBounds(
-                    latLngBoundsBuilder.build(),
-                    (16 * Resources.getSystem().displayMetrics.density).toInt()
-                )
-                it.animateCamera(latLngBound)
+                mapView.getMapAsync {
+                    it.setOnMapLoadedCallback {
+                        val latLngBoundsBuilder = LatLngBounds.builder()
+                        positions.forEach {
+                            latLngBoundsBuilder.include(LatLngGMap(it.first, it.second))
+                        }
+                        val latLngBound = CameraUpdateFactory.newLatLngBounds(
+                            latLngBoundsBuilder.build(),
+                            (16 * Resources.getSystem().displayMetrics.density).toInt()
+                        )
+                        it.animateCamera(latLngBound)
+                }
             }
         }
     }
