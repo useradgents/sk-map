@@ -1,8 +1,8 @@
-var mapBoxEnabled = false
+var mapBoxEnabled = true
 include(":viewcontract")
 include(":viewmodel")
-include(":viewlegacy")
 include(":viewmodelTests")
+include(":viewlegacy")
 
 if (mapBoxEnabled) {
     include(":viewlegacy_mapbox")

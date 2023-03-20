@@ -15,8 +15,8 @@ kotlin {
 
             dependencies {
                 implementation(project(":viewmodel"))
-                implementation("com.github.useradgents:viewmodelTests:${Versions.framework}")
-                implementation("com.github.useradgents:core-jvm:${Versions.framework}")
+                implementation("${Versions.frameworkGroup}:viewmodelTests:${Versions.framework}")
+                implementation("${Versions.frameworkGroup}:core-jvm:${Versions.framework}")
             }
         }
     }
