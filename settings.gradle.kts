@@ -2,24 +2,21 @@ var mapBoxEnabled = false
 include(":viewcontract")
 include(":viewmodel")
 include(":viewlegacy")
+include(":viewmodelTests")
+
 if (mapBoxEnabled) {
     include(":viewlegacy_mapbox")
 }
-include(":viewmodelTests")
-
-
-fun getMapBoxKey(): String {
-    return if (mapBoxEnabled) {
-        val localProperties = java.util.Properties()
-        localProperties.load(java.io.FileInputStream(File(rootDir, "local.properties")))
-        localProperties.getProperty("mapBoxPrivateKey")
-    } else {
-        "no-key"
-    }
-}
-
 
 if (mapBoxEnabled) {
+    fun getMapBoxKey(): String {
+        val localProperties = java.util.Properties()
+        localProperties.load(java.io.FileInputStream(File(rootDir, "local.properties")))
+       return  localProperties.getProperty("mapBoxPrivateKey")
+    }
+
+
+
     dependencyResolutionManagement {
         repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
         repositories {
@@ -44,18 +41,6 @@ if (mapBoxEnabled) {
 
                 }
             }
-        }
-    }
-} else {
-    dependencyResolutionManagement {
-        repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-        repositories {
-            google()
-            mavenCentral()
-            maven {
-                url = uri("https://jitpack.io")
-            }
-
         }
     }
 }

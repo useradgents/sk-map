@@ -6,10 +6,10 @@ plugins {
 }
 
 dependencies {
-    api("com.google.android.gms:play-services-maps:18.0.2")
+    api("com.google.android.gms:play-services-maps:18.1.0")
     api("com.google.maps.android:android-maps-utils:2.3.0")
     api("com.google.maps.android:maps-utils-ktx:3.3.0")
-    implementation("com.google.android.gms:play-services-location:20.0.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }
 
 
