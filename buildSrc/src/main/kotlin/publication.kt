@@ -2,6 +2,7 @@ import org.gradle.api.Project
 
 var localPublication = true
 
+
 data class Publication(
     val signingKeyId: String,
     val signingPassword: String,

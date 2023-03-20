@@ -78,12 +78,6 @@ if (!localPublication) {
         this.sign(publishing.publications)
     }
 
-} else {
-    publishing {
-        publications.withType<MavenPublication> {
-            artifact(javadocJar.get())
-        }
-    }
 }
 
 
