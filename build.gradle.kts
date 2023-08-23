@@ -9,7 +9,7 @@ buildscript {
 
     dependencies {
         classpath("${Versions.frameworkGroup}:plugin:${Versions.framework}")
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.5.30")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.7.20")
     }
 }
 

@@ -1,4 +1,4 @@
-var mapBoxEnabled = false
+var mapBoxEnabled = true
 include(":viewcontract")
 include(":viewmodel")
 include(":viewmodelTests")

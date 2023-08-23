@@ -4,6 +4,17 @@ plugins {
     signing
 }
 
+android {
+    namespace = "tech.skot.libraries.skmap"
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
 
 tasks.dokkaHtmlPartial.configure {
     suppressInheritedMembers.set(true)

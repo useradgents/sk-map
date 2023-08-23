@@ -5,8 +5,20 @@ plugins {
 
 }
 
+
+android {
+    namespace = "tech.skot.libraries.skmap.viewlegacy"
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
 dependencies {
-    api("com.mapbox.maps:android:10.3.0")
+    api("com.mapbox.maps:android:10.15.0")
 }
 
 
