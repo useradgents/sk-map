@@ -1,9 +1,7 @@
 package tech.skot.libraries.map
 
 
-import android.R
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
 import android.view.LayoutInflater
@@ -13,9 +11,8 @@ import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.Projection
 import com.google.android.gms.maps.model.*
-import tech.skot.libraries.map.LatLng as SkLatLng
 import com.google.android.gms.maps.model.LatLng
-
+import tech.skot.libraries.skmap.viewlegacy.R
 
 
 @SuppressLint("PotentialBehaviorOverride")
@@ -29,7 +26,7 @@ open class GMapInteractionHelper(
     private var items: List<Pair<SKMapVC.Marker, Marker>> = emptyList()
     private var lastSelectedMarker: Pair<SKMapVC.Marker, Marker>? = null
     override var onMarkerClick: ((SKMapVC.Marker) -> Unit)? = null
-    private val infoWindowView = View(context)
+    private val infoWindowView = LayoutInflater.from(context).inflate(R.layout.fake_popup_window,null)
     private val adapter = MapWindowAdapter()
 
     init {

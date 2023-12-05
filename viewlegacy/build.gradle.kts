@@ -7,17 +7,20 @@ plugins {
 
 android {
     namespace = "tech.skot.libraries.skmap.viewlegacy"
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+}
+
+kotlin {
+    androidTarget("android") {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
     }
 }
 
 dependencies {
-    api("com.google.android.gms:play-services-maps:18.1.0")
+    api("com.google.android.gms:play-services-maps:18.2.0")
     api("com.google.maps.android:android-maps-utils:2.3.0")
     api("com.google.maps.android:maps-utils-ktx:3.3.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
