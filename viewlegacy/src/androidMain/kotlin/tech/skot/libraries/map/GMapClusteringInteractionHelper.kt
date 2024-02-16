@@ -77,11 +77,34 @@ class GMapClusteringInteractionHelper(
                             item: SKClusterMarker,
                             markerOptions: MarkerOptions
                         ) {
-                            CoroutineScope(context = Dispatchers.Main).launch {
+
+                            if (item.marker is SKMapVC.CustomMarker) {
+                                onCreateCustomMarkerIconIsReady?.invoke(item.marker as SKMapVC.CustomMarker)
+                                    ?.let { iconReady ->
+                                        if (iconReady) {
+                                            getIcon(item.marker, item.selected)?.let {
+                                                markerOptions.icon(it)
+                                            }
+                                        } else {
+                                            CoroutineScope(context = Dispatchers.Main).launch {
+                                                markerOptions.icon(transparentBitmap)
+                                                getIconAsync(
+                                                    item.marker,
+                                                    item.selected,
+                                                    onResult = {
+                                                        clusterManager.updateItem(item)
+                                                        clusterManager.cluster()
+                                                    })
+                                            }
+                                        }
+                                    }
+                                    ?: throw NoSuchFieldException("onCreateCustomMarkerIconIsReady must not be null")
+                            } else {
                                 getIcon(item.marker, item.selected)?.let {
                                     markerOptions.icon(it)
                                 }
                             }
+
                             super.onBeforeClusterItemRendered(item, markerOptions)
                         }
 
@@ -255,17 +278,12 @@ class GMapClusteringInteractionHelper(
             val addVisible = visibleNewMarker.map { marker ->
                 SKClusterMarker(marker, false)
             }
-            loadingImageJob?.cancel()
-            loadingImageJob = CoroutineScope(context = Dispatchers.Main).launch {
-                addVisible.forEach {
-                    getIcon(it.marker, false)
-                }
-                clusterManager.addItems(addVisible)
 
-                items = addVisible + addHidden + updateVisble + updateHidden
+            clusterManager.addItems(addVisible)
 
-                clusterManager.cluster()
-            }
+            items = addVisible + addHidden + updateVisble + updateHidden
+            clusterManager.cluster()
+
 
         }
     }

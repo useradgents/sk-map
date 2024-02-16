@@ -42,12 +42,24 @@ class SKMapView(
      * use it to create BitmapDescriptor in case of  [CustomMarker][SKMapVC.CustomMarker] use
      */
     @Suppress("unused")
-    var onCreateCustomMarkerIcon: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap)? = null
+    var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap)? = null
         set(value) {
             field = value
             mapInteractionHelper?.onCreateCustomMarkerIcon = value
         }
+    @Suppress("unused")
+    var onCreateCustomMarkerIconAsync: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap)? = null
+        set(value) {
+            field = value
+            mapInteractionHelper?.onCreateCustomMarkerIconAsync = value
+        }
 
+    @Suppress("unused")
+    var onCreateCustomMarkerIconIsReady: ((SKMapVC.CustomMarker) -> Boolean)? = null
+        set(value) {
+            field = value
+            mapInteractionHelper?.onCreateCustomMarkerIconIsReady = value
+        }
 
     @Suppress("unused")
     var getMarkerAnchor : ((SKMapVC.Marker, selected: Boolean) -> Pair<Float, Float>?)? = null
@@ -210,6 +222,8 @@ class SKMapView(
                 }
             }.apply {
                 this.onCreateCustomMarkerIcon = this@SKMapView.onCreateCustomMarkerIcon
+                this.onCreateCustomMarkerIconAsync = this@SKMapView.onCreateCustomMarkerIconAsync
+                this.onCreateCustomMarkerIconIsReady = this@SKMapView.onCreateCustomMarkerIconIsReady
                 this.getMarkerAnchor = this@SKMapView.getMarkerAnchor
                 this.onOnMapBoundsChange(proxy.onMapBoundsChange)
                 this.onMarkerClick = proxy.onMarkerClicked

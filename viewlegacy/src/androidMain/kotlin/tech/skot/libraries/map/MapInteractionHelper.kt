@@ -16,6 +16,8 @@ import tech.skot.core.toPixelSize
 import tech.skot.core.view.Color
 import com.google.android.gms.maps.model.LatLng as LatLngGMap
 import tech.skot.libraries.map.LatLng
+import java.lang.Exception
+import java.lang.IllegalStateException
 
 abstract class MapInteractionHelper(
     val context: Context,
@@ -23,12 +25,14 @@ abstract class MapInteractionHelper(
     val memoryCache: LruCache<String, SKMapView.BitmapDescriptorContainer>
 ) {
 
-    protected var loadingImageJob: Job? = null
-
+    protected val transparentBitmap = BitmapDescriptorFactory.fromResource(android.R.color.transparent)
     private var polylineItems: List<Pair<SKMapVC.Polyline, Polyline>> = emptyList()
     private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
-    var onCreateCustomMarkerIcon: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
+    var onCreateCustomMarkerIconIsReady: ((SKMapVC.CustomMarker) -> Boolean)? = null
+    var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
+        null
+    var onCreateCustomMarkerIconAsync: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
         null
     var getMarkerAnchor: ((SKMapVC.Marker, selected: Boolean) -> Pair<Float, Float>?)? = null
     abstract fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
@@ -233,7 +237,26 @@ abstract class MapInteractionHelper(
         }
     }
 
-    suspend fun getIcon(marker: SKMapVC.Marker, selected: Boolean): BitmapDescriptor? {
+    suspend fun getIconAsync(
+        marker: SKMapVC.Marker,
+        selected: Boolean,
+        onResult: (bitmap: Bitmap) -> Unit
+    ) {
+        val hash = marker.iconHash(selected)
+        if (marker is SKMapVC.CustomMarker) {
+            onCreateCustomMarkerIconAsync?.invoke(marker, selected)?.let { bitmap ->
+                SKMapView.BitmapDescriptorContainer(bitmap).let {
+                    memoryCache.put(hash, it)
+                    it.bitmapDescriptor
+                }.run {
+                    onResult(bitmap)
+                }
+            }
+                ?: throw NoSuchFieldException("onCreateCustomMarkerIconAsync must not be null with CustomMarker")
+        }
+    }
+
+    fun getIcon(marker: SKMapVC.Marker, selected: Boolean): BitmapDescriptor? {
         val hash = marker.iconHash(selected)
 
         return when (marker) {
@@ -290,8 +313,8 @@ abstract class MapInteractionHelper(
                 memoryCache.get(hash)?.bitmapDescriptor?.apply {
                     MapLoggerView.d("icon : get custom bitmap ${marker.id} from cache with hash $hash")
                 } ?: kotlin.run {
-                    onCreateCustomMarkerIcon?.invoke(marker, selected)?.let {
-                        SKMapView.BitmapDescriptorContainer(it).let {
+                    onCreateCustomMarkerIcon?.invoke(marker, selected)?.let { bitmap ->
+                        SKMapView.BitmapDescriptorContainer(bitmap).let {
                             MapLoggerView.d("icon : put custom bitmap ${marker.id} in cache  with hash $hash")
                             memoryCache.put(hash, it)
                             it.bitmapDescriptor

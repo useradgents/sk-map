@@ -110,61 +110,60 @@ open class GMapInteractionHelper(
                 pair.second.remove()
             }
 
-            loadingImageJob?.cancel()
-            loadingImageJob = CoroutineScope(Dispatchers.Main).launch {
 
-
-                //items to update on map
-                val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair ->
-                    newValueForItemsToUpdate.find {
-                        it.id == currentPair.first.id
-                    }?.let {
-                        Pair(it, currentPair.second.apply {
-                            this.position = LatLng(
-                                it.position.first,
-                                it.position.second
-                            )
-                            isVisible = !it.hidden
-
-                            val isSelected = lastSelectedMarker?.first?.id == it.id
-
-                            getMarkerAnchor?.invoke(it, isSelected)?.let {
-                                setAnchor(it.first, it.second)
-                            }
-
-                            getIcon(it, isSelected)?.let {
-                                this.setIcon(it)
-                            }
-                        })
-                    }
-                }
-
-                //items to add to map
-                val addedMarker = newItemsToAdd.mapNotNull { skMarker ->
-
-                    val anchor = getMarkerAnchor?.invoke(skMarker, false)
-
-                    val marker =
-                        map.addMarker(
-                            MarkerOptions()
-                                .position(
-                                    LatLng(
-                                        skMarker.position.first,
-                                        skMarker.position.second
-                                    )
-                                )
-                                .anchor(anchor?.first ?: 0.5f, anchor?.second ?: 1f)
-                                .visible(!skMarker.hidden)
-                                .icon(getIcon(skMarker, false))
+            //items to update on map
+            val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair ->
+                newValueForItemsToUpdate.find {
+                    it.id == currentPair.first.id
+                }?.let {
+                    Pair(it, currentPair.second.apply {
+                        this.position = LatLng(
+                            it.position.first,
+                            it.position.second
                         )
+                        isVisible = !it.hidden
 
-                    marker?.let {
-                        Pair(skMarker, marker)
-                    }
+                        val isSelected = lastSelectedMarker?.first?.id == it.id
+
+                        getMarkerAnchor?.invoke(it, isSelected)?.let {
+                            setAnchor(it.first, it.second)
+                        }
+
+                        getIcon(it, isSelected)?.let {
+                            this.setIcon(it)
+                        }
+                    })
                 }
-                this@GMapInteractionHelper.items = updatedMarker + addedMarker
             }
+
+
+            //items to add to map
+            val addedMarker = newItemsToAdd.mapNotNull { skMarker ->
+
+                val anchor = getMarkerAnchor?.invoke(skMarker, false)
+
+
+                val marker =
+                    map.addMarker(
+                        MarkerOptions()
+                            .position(
+                                LatLng(
+                                    skMarker.position.first,
+                                    skMarker.position.second
+                                )
+                            )
+                            .anchor(anchor?.first ?: 0.5f, anchor?.second ?: 1f)
+                            .visible(!skMarker.hidden)
+                            .icon(getIcon(skMarker, false))
+                    )
+
+                marker?.let {
+                    Pair(skMarker, marker)
+                }
+            }
+            this@GMapInteractionHelper.items = updatedMarker + addedMarker
         }
+
     }
 
     override fun onOnMapBoundsChange(onMapBoundsChange: ((SKMapVC.LatLngBounds) -> Unit)?) {
