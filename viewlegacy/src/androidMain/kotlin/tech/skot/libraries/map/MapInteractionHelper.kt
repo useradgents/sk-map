@@ -24,7 +24,7 @@ abstract class MapInteractionHelper(
     private var polylineItems: List<Pair<SKMapVC.Polyline, Polyline>> = emptyList()
     private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
-    var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? = null
+    var onCreateCustomMarkerIcon:  (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? = null
     var getMarkerAnchor: ((SKMapVC.Marker, selected: Boolean) -> Pair<Float, Float>?)? = null
     abstract fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
     abstract fun addMarkers(markers: List<SKMapVC.Marker>)
@@ -227,7 +227,7 @@ abstract class MapInteractionHelper(
         }
     }
 
-    fun getIcon(marker: SKMapVC.Marker, selected: Boolean): BitmapDescriptor? {
+    suspend fun getIcon(marker: SKMapVC.Marker, selected: Boolean): BitmapDescriptor? {
         val hash = marker.iconHash(selected)
 
         return when (marker) {

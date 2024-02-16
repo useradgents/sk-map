@@ -6,7 +6,6 @@ import androidx.collection.LruCache
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.Projection
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.Cluster
@@ -78,16 +77,21 @@ class GMapClusteringInteractionHelper(
                             item: SKClusterMarker,
                             markerOptions: MarkerOptions
                         ) {
-                            getIcon(item.marker, item.selected)?.let {
-                                markerOptions.icon(it)
+                            CoroutineScope(context=Dispatchers.Main).launch {
+                                getIcon(item.marker, item.selected)?.let {
+                                    markerOptions.icon(it)
+                                }
                             }
                             super.onBeforeClusterItemRendered(item, markerOptions)
                         }
 
                         override fun onClusterItemUpdated(item: SKClusterMarker, marker: Marker) {
                             super.onClusterItemUpdated(item, marker)
-                            getIcon(item.marker, item.selected)?.let {
-                                marker.setIcon(it)
+                            CoroutineScope(context=Dispatchers.Main).launch {
+                                getIcon(item.marker, item.selected)?.let {
+                                    marker.setIcon(it)
+                                }
+
                             }
                         }
 

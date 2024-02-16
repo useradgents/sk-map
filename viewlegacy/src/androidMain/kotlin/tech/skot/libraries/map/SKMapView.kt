@@ -42,7 +42,7 @@ class SKMapView(
      * use it to create BitmapDescriptor in case of  [CustomMarker][SKMapVC.CustomMarker] use
      */
     @Suppress("unused")
-    var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap)? = null
+    var onCreateCustomMarkerIcon: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap)? = null
         set(value) {
             field = value
             mapInteractionHelper?.onCreateCustomMarkerIcon = value
