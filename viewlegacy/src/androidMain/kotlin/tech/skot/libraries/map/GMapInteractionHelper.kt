@@ -110,7 +110,8 @@ open class GMapInteractionHelper(
                 pair.second.remove()
             }
 
-            CoroutineScope(Dispatchers.Main).launch {
+            loadingImageJob?.cancel()
+            loadingImageJob = CoroutineScope(Dispatchers.Main).launch {
 
 
                 //items to update on map

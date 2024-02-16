@@ -77,7 +77,7 @@ class GMapClusteringInteractionHelper(
                             item: SKClusterMarker,
                             markerOptions: MarkerOptions
                         ) {
-                            CoroutineScope(context=Dispatchers.Main).launch {
+                            CoroutineScope(context = Dispatchers.Main).launch {
                                 getIcon(item.marker, item.selected)?.let {
                                     markerOptions.icon(it)
                                 }
@@ -87,7 +87,7 @@ class GMapClusteringInteractionHelper(
 
                         override fun onClusterItemUpdated(item: SKClusterMarker, marker: Marker) {
                             super.onClusterItemUpdated(item, marker)
-                            CoroutineScope(context=Dispatchers.Main).launch {
+                            CoroutineScope(context = Dispatchers.Main).launch {
                                 getIcon(item.marker, item.selected)?.let {
                                     marker.setIcon(it)
                                 }
@@ -207,7 +207,7 @@ class GMapClusteringInteractionHelper(
                 marker.hidden
             }
 
-            val (hiddenNewMarkerUpdate , visibleNewMarker) = newItemsToAdd.partition { marker ->
+            val (hiddenNewMarkerUpdate, visibleNewMarker) = newItemsToAdd.partition { marker ->
                 marker.hidden
             }
 
@@ -224,7 +224,7 @@ class GMapClusteringInteractionHelper(
                     it.marker.id == marker.id
                 }?.let {
                     clusterManager.removeItem(it)
-                    if(marker.id == lastSelectedMarker?.marker?.id){
+                    if (marker.id == lastSelectedMarker?.marker?.id) {
                         lastSelectedMarker = null
                     }
                     it.marker = marker
@@ -236,16 +236,17 @@ class GMapClusteringInteractionHelper(
                 oldItemsToUpdate.find {
                     it.marker.id == marker.id
                 }?.let {
-                    if(!it.marker.hidden){
+                    if (!it.marker.hidden) {
                         it.marker = marker
                         clusterManager.updateItem(it)
-                    }else{
+                    } else {
                         it.marker = marker
                         clusterManager.addItem(it)
                     }
                     it
                 }
             }
+
 
             val addHidden = hiddenNewMarkerUpdate.map { marker ->
                 SKClusterMarker(marker, false)
@@ -254,11 +255,18 @@ class GMapClusteringInteractionHelper(
             val addVisible = visibleNewMarker.map { marker ->
                 SKClusterMarker(marker, false)
             }
-            clusterManager.addItems(addVisible)
+            loadingImageJob?.cancel()
+            loadingImageJob = CoroutineScope(context = Dispatchers.Main).launch {
+                addVisible.forEach {
+                    getIcon(it.marker, false)
+                }
+                clusterManager.addItems(addVisible)
 
-            items = addVisible +  addHidden + updateVisble + updateHidden
+                items = addVisible + addHidden + updateVisble + updateHidden
 
-            clusterManager.cluster()
+                clusterManager.cluster()
+            }
+
         }
     }
 
