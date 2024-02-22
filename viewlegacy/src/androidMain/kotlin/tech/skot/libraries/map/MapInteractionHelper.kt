@@ -16,6 +16,7 @@ import tech.skot.core.toPixelSize
 import tech.skot.core.view.Color
 import com.google.android.gms.maps.model.LatLng as LatLngGMap
 import tech.skot.libraries.map.LatLng
+import tech.skot.libraries.skmap.viewlegacy.R
 import java.lang.Exception
 import java.lang.IllegalStateException
 
@@ -25,7 +26,8 @@ abstract class MapInteractionHelper(
     val memoryCache: LruCache<String, SKMapView.BitmapDescriptorContainer>
 ) {
 
-    protected val transparentBitmap = BitmapDescriptorFactory.fromResource(android.R.color.transparent)
+    protected val transparentBitmap = BitmapDescriptorFactory.fromResource(R.drawable.empty)
+
     private var polylineItems: List<Pair<SKMapVC.Polyline, Polyline>> = emptyList()
     private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
@@ -240,7 +242,7 @@ abstract class MapInteractionHelper(
     suspend fun getIconAsync(
         marker: SKMapVC.Marker,
         selected: Boolean,
-        onResult: (bitmap: Bitmap) -> Unit
+        onResult: (bitmap: BitmapDescriptor) -> Unit
     ) {
         val hash = marker.iconHash(selected)
         if (marker is SKMapVC.CustomMarker) {
@@ -249,7 +251,7 @@ abstract class MapInteractionHelper(
                     memoryCache.put(hash, it)
                     it.bitmapDescriptor
                 }.run {
-                    onResult(bitmap)
+                    onResult(this)
                 }
             }
                 ?: throw NoSuchFieldException("onCreateCustomMarkerIconAsync must not be null with CustomMarker")

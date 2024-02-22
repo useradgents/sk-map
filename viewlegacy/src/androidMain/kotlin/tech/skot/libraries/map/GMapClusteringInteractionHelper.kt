@@ -77,7 +77,6 @@ class GMapClusteringInteractionHelper(
                             item: SKClusterMarker,
                             markerOptions: MarkerOptions
                         ) {
-
                             if (item.marker is SKMapVC.CustomMarker) {
                                 onCreateCustomMarkerIconIsReady?.invoke(item.marker as SKMapVC.CustomMarker)
                                     ?.let { iconReady ->
@@ -86,8 +85,8 @@ class GMapClusteringInteractionHelper(
                                                 markerOptions.icon(it)
                                             }
                                         } else {
+                                            markerOptions.icon(transparentBitmap)
                                             CoroutineScope(context = Dispatchers.Main).launch {
-                                                markerOptions.icon(transparentBitmap)
                                                 getIconAsync(
                                                     item.marker,
                                                     item.selected,
