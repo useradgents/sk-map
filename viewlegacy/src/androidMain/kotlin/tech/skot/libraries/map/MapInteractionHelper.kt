@@ -31,7 +31,7 @@ abstract class MapInteractionHelper(
     private var polylineItems: List<Pair<SKMapVC.Polyline, Polyline>> = emptyList()
     private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
-    var onCreateCustomMarkerIconIsReady: ((SKMapVC.CustomMarker) -> Boolean)? = null
+    var onCreateCustomMarkerIconIsReady: ((SKMapVC.CustomMarker) -> Boolean)? = { true }
     var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
         null
     var onCreateCustomMarkerIconAsync: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
