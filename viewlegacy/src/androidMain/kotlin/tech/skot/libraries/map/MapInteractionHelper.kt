@@ -8,12 +8,17 @@ import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
 import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
-import com.google.android.gms.maps.MapView import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.*
+import kotlinx.coroutines.Job
 import tech.skot.core.toColor
 import tech.skot.core.toPixelSize
 import tech.skot.core.view.Color
 import com.google.android.gms.maps.model.LatLng as LatLngGMap
 import tech.skot.libraries.map.LatLng
+import tech.skot.libraries.skmap.viewlegacy.R
+import java.lang.Exception
+import java.lang.IllegalStateException
 
 abstract class MapInteractionHelper(
     val context: Context,
@@ -21,10 +26,16 @@ abstract class MapInteractionHelper(
     val memoryCache: LruCache<String, SKMapView.BitmapDescriptorContainer>
 ) {
 
+    protected val transparentBitmap = BitmapDescriptorFactory.fromResource(R.drawable.empty)
+
     private var polylineItems: List<Pair<SKMapVC.Polyline, Polyline>> = emptyList()
     private var polygonItems: List<Pair<SKMapVC.Polygon, Polygon>> = emptyList()
     abstract var onMarkerClick: ((SKMapVC.Marker) -> Unit)?
-    var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? = null
+    var onCreateCustomMarkerIconIsReady: ((SKMapVC.CustomMarker) -> Boolean)? = { true }
+    var onCreateCustomMarkerIcon: ((SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
+        null
+    var onCreateCustomMarkerIconAsync: (suspend (SKMapVC.CustomMarker, selected: Boolean) -> Bitmap?)? =
+        null
     var getMarkerAnchor: ((SKMapVC.Marker, selected: Boolean) -> Pair<Float, Float>?)? = null
     abstract fun onSelectedMarker(selectedMarker: SKMapVC.Marker?)
     abstract fun addMarkers(markers: List<SKMapVC.Marker>)
@@ -79,7 +90,7 @@ abstract class MapInteractionHelper(
         }
     }
 
-    fun addPolygons(polygons : List<SKMapVC.Polygon>){
+    fun addPolygons(polygons: List<SKMapVC.Polygon>) {
         mapView.getMapAsync { googleMap ->
             //first parts -> items in map still exist in new markers list
             //second parts -> items in maps no longer exist in new markers list
@@ -98,21 +109,22 @@ abstract class MapInteractionHelper(
                 pair.second.remove()
             }
             //items to update on map
-            val updatedMarker = oldItemsToUpdate.mapNotNull { currentPair : Pair<SKMapVC.Polygon, Polygon> ->
-                newValueForItemsToUpdate.find {
-                    it.id == currentPair.first.id
-                }?.let {
-                    Pair(it, currentPair.second.apply {
-                        this.points = it.points.map {
-                            LatLngGMap(it.first, it.second)
-                        }
-                        this.isVisible = !it.hidden
-                        fillColor = it.fillColor.toColor(context)
-                        strokeColor = it.strokeColor.toColor(context)
-                        strokeWidth = it.lineWidth.toPixelSize(context).toFloat()
-                    })
+            val updatedMarker =
+                oldItemsToUpdate.mapNotNull { currentPair: Pair<SKMapVC.Polygon, Polygon> ->
+                    newValueForItemsToUpdate.find {
+                        it.id == currentPair.first.id
+                    }?.let {
+                        Pair(it, currentPair.second.apply {
+                            this.points = it.points.map {
+                                LatLngGMap(it.first, it.second)
+                            }
+                            this.isVisible = !it.hidden
+                            fillColor = it.fillColor.toColor(context)
+                            strokeColor = it.strokeColor.toColor(context)
+                            strokeWidth = it.lineWidth.toPixelSize(context).toFloat()
+                        })
+                    }
                 }
-            }
 
             //items to add to map
             val addedLines = newItemsToAdd.map { polygon ->
@@ -227,6 +239,25 @@ abstract class MapInteractionHelper(
         }
     }
 
+    suspend fun getIconAsync(
+        marker: SKMapVC.Marker,
+        selected: Boolean,
+        onResult: (bitmap: BitmapDescriptor) -> Unit
+    ) {
+        val hash = marker.iconHash(selected)
+        if (marker is SKMapVC.CustomMarker) {
+            onCreateCustomMarkerIconAsync?.invoke(marker, selected)?.let { bitmap ->
+                SKMapView.BitmapDescriptorContainer(bitmap).let {
+                    memoryCache.put(hash, it)
+                    it.bitmapDescriptor
+                }.run {
+                    onResult(this)
+                }
+            }
+                ?: throw NoSuchFieldException("onCreateCustomMarkerIconAsync must not be null with CustomMarker")
+        }
+    }
+
     fun getIcon(marker: SKMapVC.Marker, selected: Boolean): BitmapDescriptor? {
         val hash = marker.iconHash(selected)
 
@@ -255,6 +286,7 @@ abstract class MapInteractionHelper(
                 }
 
             }
+
             is SKMapVC.ColorizedIconMarker -> {
                 memoryCache.get(hash)?.bitmapDescriptor?.apply {
                     MapLoggerView.d("icon : get colorized bitmap ${marker.id} from cache with hash $hash")
@@ -278,12 +310,13 @@ abstract class MapInteractionHelper(
                     }
                 }
             }
+
             is SKMapVC.CustomMarker -> {
                 memoryCache.get(hash)?.bitmapDescriptor?.apply {
                     MapLoggerView.d("icon : get custom bitmap ${marker.id} from cache with hash $hash")
                 } ?: kotlin.run {
-                    onCreateCustomMarkerIcon?.invoke(marker, selected)?.let {
-                        SKMapView.BitmapDescriptorContainer(it).let {
+                    onCreateCustomMarkerIcon?.invoke(marker, selected)?.let { bitmap ->
+                        SKMapView.BitmapDescriptorContainer(bitmap).let {
                             MapLoggerView.d("icon : put custom bitmap ${marker.id} in cache  with hash $hash")
                             memoryCache.put(hash, it)
                             it.bitmapDescriptor

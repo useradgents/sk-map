@@ -6,7 +6,6 @@ import androidx.collection.LruCache
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.Projection
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.Cluster
@@ -78,16 +77,43 @@ class GMapClusteringInteractionHelper(
                             item: SKClusterMarker,
                             markerOptions: MarkerOptions
                         ) {
-                            getIcon(item.marker, item.selected)?.let {
-                                markerOptions.icon(it)
+                            if (item.marker is SKMapVC.CustomMarker) {
+                                onCreateCustomMarkerIconIsReady?.invoke(item.marker as SKMapVC.CustomMarker)
+                                    ?.let { iconReady ->
+                                        if (iconReady) {
+                                            getIcon(item.marker, item.selected)?.let {
+                                                markerOptions.icon(it)
+                                            }
+                                        } else {
+                                            markerOptions.icon(transparentBitmap)
+                                            CoroutineScope(context = Dispatchers.Main).launch {
+                                                getIconAsync(
+                                                    item.marker,
+                                                    item.selected,
+                                                    onResult = {
+                                                        clusterManager.updateItem(item)
+                                                        clusterManager.cluster()
+                                                    })
+                                            }
+                                        }
+                                    }
+                                    ?: throw NoSuchFieldException("onCreateCustomMarkerIconIsReady must not be null")
+                            } else {
+                                getIcon(item.marker, item.selected)?.let {
+                                    markerOptions.icon(it)
+                                }
                             }
+
                             super.onBeforeClusterItemRendered(item, markerOptions)
                         }
 
                         override fun onClusterItemUpdated(item: SKClusterMarker, marker: Marker) {
                             super.onClusterItemUpdated(item, marker)
-                            getIcon(item.marker, item.selected)?.let {
-                                marker.setIcon(it)
+                            CoroutineScope(context = Dispatchers.Main).launch {
+                                getIcon(item.marker, item.selected)?.let {
+                                    marker.setIcon(it)
+                                }
+
                             }
                         }
 
@@ -203,7 +229,7 @@ class GMapClusteringInteractionHelper(
                 marker.hidden
             }
 
-            val (hiddenNewMarkerUpdate , visibleNewMarker) = newItemsToAdd.partition { marker ->
+            val (hiddenNewMarkerUpdate, visibleNewMarker) = newItemsToAdd.partition { marker ->
                 marker.hidden
             }
 
@@ -220,7 +246,7 @@ class GMapClusteringInteractionHelper(
                     it.marker.id == marker.id
                 }?.let {
                     clusterManager.removeItem(it)
-                    if(marker.id == lastSelectedMarker?.marker?.id){
+                    if (marker.id == lastSelectedMarker?.marker?.id) {
                         lastSelectedMarker = null
                     }
                     it.marker = marker
@@ -232,16 +258,17 @@ class GMapClusteringInteractionHelper(
                 oldItemsToUpdate.find {
                     it.marker.id == marker.id
                 }?.let {
-                    if(!it.marker.hidden){
+                    if (!it.marker.hidden) {
                         it.marker = marker
                         clusterManager.updateItem(it)
-                    }else{
+                    } else {
                         it.marker = marker
                         clusterManager.addItem(it)
                     }
                     it
                 }
             }
+
 
             val addHidden = hiddenNewMarkerUpdate.map { marker ->
                 SKClusterMarker(marker, false)
@@ -250,11 +277,13 @@ class GMapClusteringInteractionHelper(
             val addVisible = visibleNewMarker.map { marker ->
                 SKClusterMarker(marker, false)
             }
+
             clusterManager.addItems(addVisible)
 
-            items = addVisible +  addHidden + updateVisble + updateHidden
-
+            items = addVisible + addHidden + updateVisble + updateHidden
             clusterManager.cluster()
+
+
         }
     }
 
