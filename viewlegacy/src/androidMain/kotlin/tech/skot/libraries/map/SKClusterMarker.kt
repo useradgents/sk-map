@@ -16,5 +16,8 @@ class SKClusterMarker(var marker: SKMapVC.Marker, var selected : Boolean) : Clus
         return null
     }
 
+    override fun getZIndex(): Float {
+        return 5f
+    }
 
 }

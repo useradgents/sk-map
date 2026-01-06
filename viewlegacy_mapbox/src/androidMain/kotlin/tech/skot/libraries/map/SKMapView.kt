@@ -14,14 +14,15 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.mapbox.common.location.LocationError
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CoordinateBounds
+import com.mapbox.maps.MapLoadedCallback
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.dsl.cameraOptions
 import com.mapbox.maps.plugin.animation.flyTo
-import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadedListener
 import com.mapbox.maps.plugin.gestures.*
 import com.mapbox.maps.plugin.locationcomponent.LocationConsumer
 import com.mapbox.maps.plugin.locationcomponent.location
@@ -50,11 +51,26 @@ class SKMapView(
         ) {
         }
 
+        override fun onError(error: LocationError) {
+
+        }
+
+        override fun onHorizontalAccuracyRadiusUpdated(
+            vararg radius: Double,
+            options: (ValueAnimator.() -> Unit)?
+        ) {
+
+        }
+
         override fun onLocationUpdated(
             vararg location: Point,
             options: (ValueAnimator.() -> Unit)?
         ) {
             lastKnownLocation = location.last()
+        }
+
+        override fun onPuckAccuracyRadiusAnimatorDefaultOptionsUpdated(options: ValueAnimator.() -> Unit) {
+
         }
 
         override fun onPuckBearingAnimatorDefaultOptionsUpdated(options: ValueAnimator.() -> Unit) {
@@ -107,12 +123,12 @@ class SKMapView(
     override fun onMapType(mapType: MapType) {
         mapView.getMapboxMap {
             when (mapType) {
-                is MapType.NORMAL -> it.loadStyleUri(Style.MAPBOX_STREETS)
-                is MapType.SATELLITE -> it.loadStyleUri(Style.SATELLITE)
-                is MapType.HYBRID -> it.loadStyleUri(Style.SATELLITE_STREETS)
-                is MapType.TERRAIN -> it.loadStyleUri(Style.OUTDOORS)
-                is MapType.CUSTOM -> it.loadStyleUri(mapType.uri)
-                else -> it.loadStyleUri(Style.MAPBOX_STREETS)
+                is MapType.NORMAL -> it.loadStyle(Style.MAPBOX_STREETS)
+                is MapType.SATELLITE -> it.loadStyle(Style.SATELLITE)
+                is MapType.HYBRID -> it.loadStyle(Style.SATELLITE_STREETS)
+                is MapType.TERRAIN -> it.loadStyle(Style.OUTDOORS)
+                is MapType.CUSTOM -> it.loadStyle(mapType.uri)
+                else -> it.loadStyle(Style.MAPBOX_STREETS)
             }
         }
     }
@@ -425,30 +441,21 @@ class SKMapView(
 
 fun MapView.getMapboxMap(onReady: (MapboxMap) -> Unit) {
 
-    this.getMapboxMap().let { mapboxMap ->
+    this.mapboxMap.let { mapboxMap ->
         try {
-            if (mapboxMap.isFullyLoaded()) {
+            if (mapboxMap.isValid()) {
                 onReady.invoke(mapboxMap)
             } else {
-                var listener: OnMapLoadedListener? = null
-                listener = OnMapLoadedListener {
+                val listener: MapLoadedCallback = MapLoadedCallback {
                     onReady.invoke(mapboxMap)
-                    listener?.let {
-                        mapboxMap.removeOnMapLoadedListener(it)
-                    }
-
                 }
-                mapboxMap.addOnMapLoadedListener(listener)
+                mapboxMap.subscribeMapLoaded(listener)
             }
         } catch (e: Exception) {
-            var listener: OnMapLoadedListener? = null
-            listener = OnMapLoadedListener {
+            val listener: MapLoadedCallback = MapLoadedCallback {
                 onReady.invoke(mapboxMap)
-                listener?.let {
-                    mapboxMap.removeOnMapLoadedListener(it)
-                }
             }
-            mapboxMap.addOnMapLoadedListener(listener)
+            mapboxMap.subscribeMapLoaded(listener)
         }
     }
 }

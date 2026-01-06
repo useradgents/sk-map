@@ -9,7 +9,7 @@ buildscript {
 
     dependencies {
         classpath("${Versions.frameworkGroup}:plugin:${Versions.framework}")
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.7.20")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.9.10")
     }
 }
 
@@ -33,21 +33,4 @@ allprojects {
         }
     }
 
-}
-
-if(!localPublication) {
-
-    val publication = getPublication(project)
-
-    nexusPublishing {
-        repositories {
-            sonatype {
-                stagingProfileId.set(publication.sonatypeStagingProfileId)
-                username.set(publication.ossrhUsername)
-                password.set(publication.ossrhPassword)
-                nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-                snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-            }
-        }
-    }
 }
