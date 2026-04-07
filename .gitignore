@@ -11,3 +11,4 @@
 **/build
 /uizips
 /reports
+/buildSrc/.kotlin

@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         google()
+        mavenLocal()
         mavenCentral()
         maven {
             url = uri("https://jitpack.io")
@@ -9,7 +10,7 @@ buildscript {
 
     dependencies {
         classpath("${Versions.frameworkGroup}:plugin:${Versions.framework}")
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.9.10")
+        classpath(libs.dokka.gradle.plugin)
     }
 }
 
@@ -27,6 +28,7 @@ allprojects {
 
     repositories {
         google()
+        mavenLocal()
         mavenCentral()
         maven {
             url = uri("https://jitpack.io")

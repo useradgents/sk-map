@@ -1,3 +1,6 @@
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 var mapBoxEnabled = false
 include(":viewcontract")
 include(":viewmodel")
@@ -20,6 +23,7 @@ if (mapBoxEnabled) {
     dependencyResolutionManagement {
         repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
         repositories {
+            mavenLocal()
             google()
             mavenCentral()
             maven {

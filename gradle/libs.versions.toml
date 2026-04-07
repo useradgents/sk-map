@@ -1,0 +1,16 @@
+[versions]
+androidMapsUtils = "4.1.1"
+dokkaGradlePlugin = "2.2.0"
+dokkaGradlePluginVersion = "1.9.10"
+mapsUtilsKtx = "6.0.1"
+playServicesLocation = "21.3.0"
+playServicesMaps = "20.0.0"
+skot-framework = "1.4.2-ua"
+
+[libraries]
+android-maps-utils = { group = "com.google.maps.android", name = "android-maps-utils", version.ref = "androidMapsUtils" }
+dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokkaGradlePlugin" }
+maps-utils-ktx = { group = "com.google.maps.android", name = "maps-utils-ktx", version.ref = "mapsUtilsKtx" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+

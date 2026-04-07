@@ -3,24 +3,22 @@ plugins {
     id("tech.skot.library")
     signing
 }
-
-android {
-    namespace = "tech.skot.libraries.skmap"
+kotlin {
+    android {
+        compileSdk = 36
+        namespace = "tech.skot.libraries.skmap"
+    }
 }
 
 
-tasks.dokkaHtmlPartial.configure {
-    suppressInheritedMembers.set(true)
-}
+val dokkaOutputDir = layout.buildDirectory.dir("dokkaHtml")
 
-tasks.dokkaGfmPartial.configure {
-    suppressInheritedMembers.set(true)
-}
 
-val dokkaOutputDir = "$buildDir/dokka"
-
-tasks.getByName<org.jetbrains.dokka.gradle.DokkaTask>("dokkaHtml") {
-    outputDirectory.set(file(dokkaOutputDir))
+dokka {
+    moduleName.set("sk-map")
+    dokkaPublications.html {
+        outputDirectory.set(dokkaOutputDir)
+    }
 }
 
 val deleteDokkaOutputDir by tasks.register<Delete>("deleteDokkaOutputDirectory") {
