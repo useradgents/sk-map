@@ -195,6 +195,19 @@ class SKMapView(
         mapInteractionHelper?.onMarkerClick = onMarkerClick
     }
 
+    /**
+     * Reinstalls the map listeners set by this view.
+     *
+     * Any android-maps-utils layer added on the same GoogleMap (KmlLayer, GeoJsonLayer...)
+     * creates MapObjectManagers which set their own listeners through Handler.post, overriding
+     * the ones set here: marker clicks then never reach the app. Call this once the layer has
+     * been added — from a post{} block, so it runs after the manager has set its own listeners.
+     */
+    @Suppress("unused")
+    fun reattachMapListeners() {
+        mapInteractionHelper?.reattachMapListeners()
+    }
+
     override fun onMapInteractionSettings(mapInteractionSettings: SKMapVC.MapInteractionSettings) {
         mapView.getMapAsync { googleMap ->
             googleMap.clear()

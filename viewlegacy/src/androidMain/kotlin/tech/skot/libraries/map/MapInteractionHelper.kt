@@ -42,6 +42,18 @@ abstract class MapInteractionHelper(
 
     abstract fun onOnMapBoundsChange(onMapBoundsChange: ((SKMapVC.LatLngBounds) -> Unit)?)
 
+    /**
+     * Reinstalls the listeners this helper has set on the GoogleMap.
+     *
+     * Needed because other libraries may replace them: every MapObjectManager of
+     * android-maps-utils (created by KmlLayer, GeoJsonLayer, ClusterManager...) sets its own
+     * listeners on the map through Handler.post, silently overriding the ones set here.
+     * Call it after such a layer has been added, otherwise marker clicks are lost.
+     *
+     * Default implementation does nothing.
+     */
+    open fun reattachMapListeners() {}
+
     private fun oldLineStillAvailable(
         polyline: SKMapVC.Polyline,
         polylines: List<SKMapVC.Polyline>

@@ -34,6 +34,14 @@ open class GMapInteractionHelper(
     private val adapter = MapWindowAdapter()
 
     init {
+        attachMarkerListeners()
+    }
+
+    override fun reattachMapListeners() {
+        attachMarkerListeners()
+    }
+
+    private fun attachMarkerListeners() {
         mapView.getMapAsync {
             it.setInfoWindowAdapter(adapter)
             it.setOnMarkerClickListener { clickedMarker ->
