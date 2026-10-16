@@ -1,21 +1,41 @@
 plugins {
-    kotlin("multiplatform")
+    id("com.android.library")
     signing
 }
 
-
-kotlin {
-    jvm("jvm")
-
+android {
+    namespace = "tech.skot.libraries.skmap.viewmodeltests"
+    compileSdk = tech.skot.Versions.android_compileSdk
+    defaultConfig {
+        minSdk = tech.skot.Versions.android_minSdk
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
     sourceSets {
-        val jvmMain by getting {
+        getByName("main") {
+            kotlin {
+                directories.add("src/jvmMain/kotlin")
+            }
+        }
+    }
+    publishing {
+        singleVariant("release") { withSourcesJar() }
+    }
+}
 
-            kotlin.srcDir("src/jvmMain/kotlin")
+dependencies {
+    implementation(project(":viewmodel"))
+    implementation("${Versions.frameworkGroup}:viewmodelTests:${Versions.framework}")
+    implementation("${Versions.frameworkGroup}:core:${Versions.framework}")
+}
 
-            dependencies {
-                implementation(project(":viewmodel"))
-                implementation("${Versions.frameworkGroup}:viewmodelTests:${Versions.framework}")
-                implementation("${Versions.frameworkGroup}:core-jvm:${Versions.framework}")
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
             }
         }
     }

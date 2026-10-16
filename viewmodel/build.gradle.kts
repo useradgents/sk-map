@@ -1,13 +1,9 @@
 plugins {
-    kotlin("multiplatform")
     id("tech.skot.library")
     signing
 }
-kotlin {
-    android {
-        compileSdk = 36
-        namespace = "tech.skot.libraries.skmap"
-    }
+android {
+    namespace = "tech.skot.libraries.skmap"
 }
 
 

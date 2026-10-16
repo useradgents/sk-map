@@ -1,5 +1,4 @@
 plugins {
-    kotlin("multiplatform")
     id("tech.skot.library-viewlegacy")
     signing
 
@@ -8,13 +7,6 @@ plugins {
 
 android {
     namespace = "tech.skot.libraries.skmap.viewlegacy"
-}
-
-kotlin {
-    jvmToolchain(17)
-
-    androidTarget("android") {
-    }
 }
 
 dependencies {

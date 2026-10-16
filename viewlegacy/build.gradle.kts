@@ -11,7 +11,6 @@ kotlin {
 }
 
 android {
-    compileSdk { version =  release(36) }
     namespace = "tech.skot.libraries.skmap.viewlegacy"
 }
 
